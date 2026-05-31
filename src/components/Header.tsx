@@ -1,0 +1,119 @@
+import React from 'react';
+import { ShieldAlert, Users, Award, Calendar, Clock, RotateCcw } from 'lucide-react';
+import { Participant, TournamentConfig } from '../types';
+import { AVATAR_OPTIONS } from '../data/avatars';
+
+interface HeaderProps {
+  config: TournamentConfig;
+  onResetTime: () => void;
+  activeParticipant: Participant | null;
+  participants: Participant[];
+  onSelectParticipant: (id: string | null) => void;
+}
+
+export function Header({
+  config,
+  onResetTime,
+  activeParticipant,
+  participants,
+  onSelectParticipant
+}: HeaderProps) {
+  const formatTime = (isoString: string) => {
+    const d = new Date(isoString);
+    return d.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'UTC'
+    }) + ' UTC';
+  };
+
+  const getAvatarEmoji = (avatarId: string) => {
+    const found = AVATAR_OPTIONS.find((a) => a.id === avatarId);
+    return found ? found.emoji : '👤';
+  };
+
+  return (
+    <header className="relative border-b border-slate-800 bg-bg-card text-slate-100 select-none">
+      <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {/* Brand Logo & Title */}
+        <div className="flex items-center gap-4">
+          <div className="w-10 h-10 bg-brand-primary rounded-sm rotate-45 flex items-center justify-center shrink-0 shadow-md shadow-brand-primary/10">
+            <div className="w-5 h-5 bg-[#0A0C10] -rotate-45 flex items-center justify-center">
+              <ShieldAlert size={12} className="text-brand-primary" />
+            </div>
+          </div>
+          <div>
+            <h1 className="font-display text-2xl font-black tracking-tight text-white flex items-baseline leading-none">
+              GEOHAZARD
+              <span className="text-brand-primary text-[10px] font-mono tracking-widest ml-2 font-bold uppercase">
+                WORLD CUP 2026
+              </span>
+            </h1>
+            <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 font-mono mt-1">
+              Polla Deportiva Mundialista
+            </p>
+          </div>
+        </div>
+
+        {/* Dynamic Simulated Clock Info */}
+        <div className="flex flex-wrap items-center gap-2 bg-bg-darkest border border-slate-800 rounded-sm p-3 max-w-md">
+          <div className="text-brand-primary flex items-center gap-1">
+            <Clock size={14} className="animate-spin-slow shrink-0" />
+            <span className="font-mono text-[10px] font-bold text-slate-400 tracking-wider">FECHA SIMULADA:</span>
+          </div>
+          <span className="font-mono text-xs text-white font-bold">
+            {formatTime(config.currentSimulatedTime)}
+          </span>
+          <button
+            onClick={onResetTime}
+            title="Restablecer a la fecha actual"
+            className="ml-2 rounded-sm bg-slate-900 p-1 hover:bg-brand-primary hover:text-black text-slate-400 transition duration-150 cursor-pointer"
+          >
+            <RotateCcw size={10} />
+          </button>
+          
+          <div className="w-full mt-1.5 pt-1.5 border-t border-slate-800/40 flex justify-between text-[10px] text-slate-500 font-mono">
+            <span>Mundial: 11 Jun 2026</span>
+            <span className={config.isWorldCupStarted ? "text-rose-500 font-semibold" : "text-brand-primary font-semibold"}>
+              {config.isWorldCupStarted ? "● EN JUEGO" : "● PREPARACIÓN"}
+            </span>
+          </div>
+        </div>
+
+        {/* Participant Switcher / Session */}
+        <div className="flex items-center gap-4">
+          <div className="text-right hidden sm:block">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-widest block text-slate-500">Participante</span>
+            <span className="text-sm font-bold text-white block leading-tight">
+              {activeParticipant ? activeParticipant.name : 'Espectador'}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <select
+                aria-label="Seleccionar participante"
+                value={activeParticipant?.id || ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  onSelectParticipant(val === '' ? null : val);
+                }}
+                className="block w-48 rounded-sm border border-slate-800 bg-[#0A0C10] px-3 py-1.5 text-xs text-slate-300 outline-none focus:border-brand-primary font-mono cursor-pointer transition"
+              >
+                <option value="">-- Modo Espectador --</option>
+                {participants.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {getAvatarEmoji(p.avatarUrl)} {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

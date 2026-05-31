@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  /* Geometric Balance Theme Colors */
+  --color-bg-darkest: #0A0C10;
+  --color-bg-dark: #0A0C10;
+  --color-bg-card: #0F1218;
+  --color-bg-lighter: #1E293B;
+  --color-brand-primary: #10B981; /* Emerald green */
+  --color-brand-cyan: #34D399; /* Emerald lighter accent */
+  --color-brand-amber: #F59E0B; /* Warning gold */
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-darkest);
+  color: #E2E8F0;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg-darkest);
+}
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-brand-primary);
+}
