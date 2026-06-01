@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Trophy, ShieldAlert, Award, PlayCircle, Star, Sparkles, HelpCircle, GraduationCap } from 'lucide-react';
 import { Header } from './components/Header';
 import { Leaderboard } from './components/Leaderboard';
@@ -14,7 +14,8 @@ import {
   resolveTournamentPositions,
   calculateParticipantPoints,
   generateRandomPredictions,
-  calculateGroupStandings
+  calculateGroupStandings,
+  getEffectivePrediction
 } from './utils/points';
 
 // May 31, 2026 - 11 days before the Cup!
@@ -492,6 +493,7 @@ export default function App() {
 
     localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
     localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
+    alert("💾 ¡Pronóstico guardado exitosamente!");
   };
 
   // Pre-fill rest randomly (Client side option)
@@ -838,6 +840,23 @@ export default function App() {
   const activeUser = participants.find((p) => p.id === activeParticipantId) || null;
   const predictionsActive = activeUser ? activeUser.predictions : {};
 
+  // Resolve matches for rendering the active user's personalized predictions / bracket
+  const resolvedMatchesForView = useMemo(() => {
+    if (!activeUser) {
+      return matches;
+    }
+    const userMatches: Match[] = matches.map((m) => {
+      const effPred = getEffectivePrediction(m, predictionsActive[m.id]);
+      return {
+        ...m,
+        homeScore: effPred.homeScore,
+        awayScore: effPred.awayScore,
+        winnerIdToAdvance: effPred.winnerIdToAdvance
+      };
+    });
+    return resolveTournamentPositions(userMatches);
+  }, [matches, activeUser, predictionsActive]);
+
   // Group standings solver
   const currentGroupStandings = calculateGroupStandings(selectedGroupStandings, matches);
 
@@ -910,7 +929,7 @@ export default function App() {
           {/* Match selection card list */}
           {activeMainTab === 'matches' && (
             <MatchList
-              matches={matches}
+              matches={resolvedMatchesForView}
               predictions={predictionsActive}
               activeParticipant={activeUser}
               onSavePrediction={handleSavePrediction}
