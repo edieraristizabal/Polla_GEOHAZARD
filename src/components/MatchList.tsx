@@ -243,7 +243,7 @@ export function MatchList({
               const awayTeam = getTeamInfo(m.awayTeamId);
               const pred = predictions[m.id];
               const lock = getLockStatus(m);
-              const isLocked = lock.locked || activeParticipant?.status === 'pending';
+              const isLocked = lock.locked;
 
               const homeInputVal = editingScores[m.id]?.home ?? pred?.homeScore?.toString() ?? '';
               const awayInputVal = editingScores[m.id]?.away ?? pred?.awayScore?.toString() ?? '';

@@ -33,7 +33,7 @@ export default function App() {
   });
 
   const [selectedGroupStandings, setSelectedGroupStandings] = useState<string>('A');
-  const [activeMainTab, setActiveMainTab] = useState<'matches' | 'standings'>('matches');
+  const [activeMainTab, setActiveMainTab] = useState<'matches' | 'standings' | 'rules'>('matches');
 
   const [githubPat, setGithubPat] = useState<string>(() => localStorage.getItem('geohazard_github_pat') || '');
   const [pendingApproval, setPendingApproval] = useState<{ name: string; email: string; avatar: string } | null>(null);
@@ -59,6 +59,52 @@ export default function App() {
     });
 
     return { resolvedMatches: resolved, updatedParticipants: updated };
+  };
+
+  const saveMatchesToGitHub = async (updatedMatches: Match[], token: string) => {
+    const owner = 'edieraristizabal';
+    const repo = 'Polla_GEOHAZARD';
+    const path = 'public/data/matches.json';
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    
+    const content = JSON.stringify(updatedMatches, null, 2);
+    
+    let sha = '';
+    try {
+      const res = await fetch(url, {
+        headers: { 
+          Authorization: `token ${token}`,
+          Accept: 'application/vnd.github.v3+json'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        sha = data.sha;
+      }
+    } catch (e) {
+      console.error('Error fetching SHA from GitHub', e);
+    }
+    
+    const body = {
+      message: 'admin: update matches list from app UI',
+      content: btoa(unescape(encodeURIComponent(content))),
+      sha: sha || undefined
+    };
+    
+    const commitRes = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `token ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/vnd.github.v3+json'
+      },
+      body: JSON.stringify(body)
+    });
+    
+    if (!commitRes.ok) {
+      const err = await commitRes.json();
+      throw new Error(err.message || 'Error al guardar en GitHub');
+    }
   };
 
   const saveParticipantsToGitHub = async (updatedList: Participant[], token: string) => {
@@ -120,26 +166,43 @@ export default function App() {
     if (!window.confirm(`¿Estás seguro de rechazar/eliminar al participante con correo: ${email}?`)) {
       return;
     }
-    const token = githubPat || prompt('Ingrese su GitHub Personal Access Token (PAT) para eliminar de GitHub permanentemente:');
-    if (!token) return;
+    let token = githubPat;
+    let localOnly = false;
+    if (!token) {
+      const inputToken = prompt('Ingrese su GitHub Personal Access Token (PAT) para eliminar de GitHub permanentemente (Deje vacío para eliminar únicamente de forma local en este navegador):');
+      if (inputToken === null) {
+        return;
+      }
+      if (inputToken.trim() === '') {
+        localOnly = true;
+      } else {
+        token = inputToken.trim();
+      }
+    }
     
+    const nextParticipants = participants.filter(p => p.email.toLowerCase() !== email.toLowerCase());
+    const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(matches, nextParticipants);
+    
+    // Apply locally first
+    setParticipants(finalPart);
+    localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
+    
+    if (localOnly) {
+      alert('✅ Participante eliminado localmente en este navegador.');
+      return;
+    }
+
     setIsCommiting(true);
     try {
-      const nextParticipants = participants.filter(p => p.email.toLowerCase() !== email.toLowerCase());
-      const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(matches, nextParticipants);
-      
       await saveParticipantsToGitHub(finalPart, token);
-      
-      setParticipants(finalPart);
-      localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
       
       if (token !== githubPat) {
         setGithubPat(token);
         localStorage.setItem('geohazard_github_pat', token);
       }
-      alert('Participante rechazado/eliminado correctamente.');
+      alert('✅ Participante rechazado/eliminado y sincronizado correctamente en GitHub.');
     } catch (e: any) {
-      alert(`Error al rechazar en GitHub: ${e.message}`);
+      alert(`⚠️ Eliminado localmente, pero falló la sincronización con GitHub: ${e.message}`);
     } finally {
       setIsCommiting(false);
     }
@@ -450,7 +513,7 @@ export default function App() {
   ) => {
     if (!activeParticipantId) return;
 
-    // Strict 5-minute pre-kickoff lockout verification
+    // Strict 5-minute pre-kickoff lockout verification (bypassed for Admin)
     const m = matches.find((x) => x.id === matchId);
     if (!m) return;
 
@@ -458,7 +521,6 @@ export default function App() {
     const nowSim = new Date(config.currentSimulatedTime).getTime();
     const FIVE_MINUTES = 5 * 60 * 1000;
     const effectiveNow = Math.max(Date.now(), nowSim);
-
     if (kickoff - effectiveNow < FIVE_MINUTES) {
       alert("⚠️ REGLAMENTO DE REGISTRO LOCKOUT: Los pronósticos deben ingresarse hasta un máximo de 5 minutos antes del partido oficial.");
       return;
@@ -539,12 +601,27 @@ export default function App() {
   };
 
   // ADMIN: Save actual results of a match
-  const handleUpdateMatchScore = (
+  const handleUpdateMatchScore = async (
     matchId: string,
     homeScore: number,
     awayScore: number,
     winnerIdToAdvance?: string | null
   ) => {
+    let token = githubPat;
+    let localOnly = false;
+
+    if (!token) {
+      const inputToken = prompt('Ingrese su GitHub Personal Access Token (PAT) para guardar el resultado en el repositorio (Deje vacío para guardar únicamente de forma local en este navegador):');
+      if (inputToken === null) {
+        return;
+      }
+      if (inputToken.trim() === '') {
+        localOnly = true;
+      } else {
+        token = inputToken.trim();
+      }
+    }
+
     const nextMatches = matches.map((m) => {
       if (m.id === matchId) {
         return {
@@ -559,11 +636,33 @@ export default function App() {
 
     const { resolvedMatches, updatedParticipants } = runRecalculation(nextMatches, participants);
 
+    // Apply locally first
     setMatches(resolvedMatches);
     setParticipants(updatedParticipants);
-
     localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
     localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
+
+    if (localOnly) {
+      alert('✅ Resultado real del partido guardado localmente en este navegador (Modo Autónomo). Para sincronizarlo con todos, configura tu GitHub PAT.');
+      return;
+    }
+
+    setIsCommiting(true);
+    try {
+      // Save both matches and participants to remote GitHub
+      await saveMatchesToGitHub(resolvedMatches, token);
+      await saveParticipantsToGitHub(updatedParticipants, token);
+
+      if (token !== githubPat) {
+        setGithubPat(token);
+        localStorage.setItem('geohazard_github_pat', token);
+      }
+      alert('✅ Resultado real del partido y tabla de puntuaciones guardados y sincronizados correctamente en GitHub.');
+    } catch (err: any) {
+      alert(`⚠️ Guardado localmente, pero falló la sincronización con GitHub: ${err.message || err}`);
+    } finally {
+      setIsCommiting(false);
+    }
   };
   
 
@@ -619,58 +718,70 @@ export default function App() {
       alert('Contraseña de administrador incorrecta.');
       return;
     }
-    const token = githubPatInput || githubPat;
+    let token = githubPatInput || githubPat;
+    let localOnly = false;
     if (!token) {
-      alert('Se requiere un GitHub Personal Access Token (PAT) para guardar el cambio en el repositorio.');
-      return;
+      if (window.confirm("No se ha configurado un GitHub PAT. ¿Desea aprobar al participante únicamente de forma local en este navegador?")) {
+        localOnly = true;
+      } else {
+        return;
+      }
     }
     
+    let updatedList = [...participants];
+    const index = updatedList.findIndex(p => p.email.toLowerCase() === pendingApproval.email.toLowerCase());
+    
+    if (index >= 0) {
+      updatedList[index] = {
+        ...updatedList[index],
+        status: undefined // Approved
+      };
+    } else {
+      updatedList.push({
+        id: pendingApproval.email.toLowerCase(),
+        name: pendingApproval.name,
+        email: pendingApproval.email.toLowerCase(),
+        avatarUrl: pendingApproval.avatar,
+        predictions: {},
+        points: 0,
+        stats: { correctWinner: 0, correctExactScore: 0, correctQualifiedTeams: 0 },
+        hasAutoFilled: false,
+        isCompleted: false,
+        status: undefined // Approved
+      });
+    }
+
+    const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(matches, updatedList);
+    
+    // Apply locally first
+    setParticipants(finalPart);
+    localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
+    
+    // Notify participant via mailto link
+    const notifySubject = encodeURIComponent('Inscripción Aprobada - Polla Geohazard');
+    const notifyBody = encodeURIComponent(`Hola ${pendingApproval.name},\n\nTu inscripción en la Polla Geohazard ha sido aprobada por el administrador.\n\nYa puedes ingresar a la aplicación y registrar tus predicciones:\nhttps://edieraristizabal.github.io/Polla_GEOHAZARD/\n\n¡Buena suerte!`);
+    window.open(`mailto:${pendingApproval.email}?subject=${notifySubject}&body=${notifyBody}`, '_blank');
+    
+    if (localOnly) {
+      alert(`✅ Participante ${pendingApproval.name} aprobado localmente en este navegador.`);
+      setPendingApproval(null);
+      setAdminPasswordInput('');
+      return;
+    }
+
     setIsCommiting(true);
     try {
-      let updatedList = [...participants];
-      const index = updatedList.findIndex(p => p.email.toLowerCase() === pendingApproval.email.toLowerCase());
-      
-      if (index >= 0) {
-        updatedList[index] = {
-          ...updatedList[index],
-          status: undefined // Approved
-        };
-      } else {
-        updatedList.push({
-          id: pendingApproval.email.toLowerCase(),
-          name: pendingApproval.name,
-          email: pendingApproval.email.toLowerCase(),
-          avatarUrl: pendingApproval.avatar,
-          predictions: {},
-          points: 0,
-          stats: { correctWinner: 0, correctExactScore: 0, correctQualifiedTeams: 0 },
-          hasAutoFilled: false,
-          isCompleted: false,
-          status: undefined // Approved
-        });
-      }
-
-      const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(matches, updatedList);
-      
       // Save to GitHub
       await saveParticipantsToGitHub(finalPart, token);
-      
-      setParticipants(finalPart);
-      localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
       
       setGithubPat(token);
       localStorage.setItem('geohazard_github_pat', token);
       
-      // Notify participant via mailto link
-      const notifySubject = encodeURIComponent('Inscripción Aprobada - Polla Geohazard');
-      const notifyBody = encodeURIComponent(`Hola ${pendingApproval.name},\n\nTu inscripción en la Polla Geohazard ha sido aprobada por el administrador.\n\nYa puedes ingresar a la aplicación y registrar tus predicciones:\nhttps://edieraristizabal.github.io/Polla_GEOHAZARD/\n\n¡Buena suerte!`);
-      window.open(`mailto:${pendingApproval.email}?subject=${notifySubject}&body=${notifyBody}`, '_blank');
-      
-      alert(`Participante ${pendingApproval.name} aprobado y sincronizado en GitHub.`);
+      alert(`✅ Participante ${pendingApproval.name} aprobado y sincronizado en GitHub.`);
       setPendingApproval(null);
       setAdminPasswordInput('');
     } catch (e: any) {
-      alert(`Error al guardar en GitHub: ${e.message}`);
+      alert(`⚠️ Aprobado localmente, pero falló la sincronización con GitHub: ${e.message}`);
     } finally {
       setIsCommiting(false);
     }
@@ -678,10 +789,14 @@ export default function App() {
 
   const handleImportSubmission = async () => {
     if (!pendingImport) return;
-    const token = githubPatInput || githubPat;
+    let token = githubPatInput || githubPat;
+    let localOnly = false;
     if (!token) {
-      alert('Se requiere un GitHub Personal Access Token (PAT) para guardar el cambio en el repositorio.');
-      return;
+      if (window.confirm("No se ha configurado un GitHub PAT. ¿Desea importar los pronósticos únicamente de forma local en este navegador?")) {
+        localOnly = true;
+      } else {
+        return;
+      }
     }
     
     setIsCommiting(true);
@@ -736,20 +851,28 @@ export default function App() {
       
       const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(matches, updatedList);
       
-      // Save to GitHub
-      await saveParticipantsToGitHub(finalPart, token);
-      
+      // Apply locally first
       setParticipants(finalPart);
       localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
+      
+      let message = `Se importaron ${updatedCount} pronósticos con éxito.`;
+      if (blockedCount > 0) {
+        message += `\n⚠️ ${blockedCount} pronósticos fueron omitidos por estar bajo restricción de lockout (menos de 5 minutes para el partido).`;
+      }
+
+      if (localOnly) {
+        alert(`✅ ${message} (Guardado únicamente de forma local en este navegador)`);
+        setPendingImport(null);
+        return;
+      }
+
+      // Save to GitHub
+      await saveParticipantsToGitHub(finalPart, token);
       
       setGithubPat(token);
       localStorage.setItem('geohazard_github_pat', token);
       
-      let message = `Se importaron ${updatedCount} pronósticos con éxito.`;
-      if (blockedCount > 0) {
-        message += `\n⚠️ ${blockedCount} pronósticos fueron omitidos por estar bajo restricción de lockout (menos de 5 minutos para el partido).`;
-      }
-      alert(message);
+      alert(`✅ ${message} Sincronizado en GitHub.`);
       setPendingImport(null);
     } catch (e: any) {
       alert(`Error al importar: ${e.message}`);
@@ -833,10 +956,20 @@ export default function App() {
             >
               📊 Clasificación de Grupos
             </button>
+            <button
+              onClick={() => setActiveMainTab('rules')}
+              className={`flex-1 sm:flex-initial px-5 py-2.5 text-[11px] uppercase font-black font-mono tracking-wider transition cursor-pointer select-none ${
+                activeMainTab === 'rules'
+                  ? 'bg-brand-primary text-black'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+              }`}
+            >
+              📜 Reglamento
+            </button>
           </div>
 
           {/* Match selection card list */}
-          {activeMainTab === 'matches' ? (
+          {activeMainTab === 'matches' && (
             <MatchList
               matches={matches}
               predictions={predictionsActive}
@@ -846,8 +979,55 @@ export default function App() {
               onSavePrediction={handleSavePrediction}
               onRandomizeRemaining={handleRandomizeRemaining}
             />
-          ) : (
+          )}
+          {activeMainTab === 'standings' && (
             <GroupStandingsGrid matches={matches} />
+          )}
+          {activeMainTab === 'rules' && (
+            <div className="bg-bg-card border border-slate-800 rounded-sm p-5 shadow-md">
+              <h4 className="text-[11px] uppercase font-black tracking-widest text-[#E2E8F0] font-mono mb-3.5 flex items-center gap-1.5 pb-2 border-b border-slate-950">
+                <GraduationCap className="text-brand-cyan shrink-0" size={13} />
+                Reglamento Geohazard
+              </h4>
+              <ul className="space-y-3 text-xs text-slate-400 leading-relaxed font-sans">
+                <li className="flex gap-2">
+                  <span className="text-brand-primary font-bold shrink-0">■</span>
+                  <span>
+                    <strong>Acierto de Ganador (+1 pt):</strong> Sí aciertas quién gana (o empate).
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-brand-primary font-bold shrink-0">■</span>
+                  <span>
+                    <strong>Marcador Exacto (+1 pt):</strong> Sí aciertas los goles exactos.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-brand-primary font-bold shrink-0">■</span>
+                  <span>
+                    <strong>Clasificados (+1 pt):</strong> Por cada país en fases de eliminación directa.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-brand-primary font-bold shrink-0">■</span>
+                  <span>
+                    <strong>Empate en Eliminatoria (+1 pt):</strong> Si predices empate en eliminación directa y aciertas quién avanza por penales.
+                  </span>
+                </li>
+                <li className="flex gap-2 border-t border-slate-900 pt-2.5">
+                  <span className="text-brand-amber font-bold shrink-0">▲</span>
+                  <span>
+                    <strong>Cierre de Partido:</strong> Autocierre <strong>5 minutos antes</strong>.
+                  </span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-brand-amber font-bold shrink-0">▲</span>
+                  <span>
+                    <strong>Cartilla Completa:</strong> Pendientes se auto-completan con resultados aleatorios al inicio del mundial.
+                  </span>
+                </li>
+              </ul>
+            </div>
           )}
 
           {/* Dedicated Admin simulator */}
@@ -881,52 +1061,6 @@ export default function App() {
             onSelectParticipant={handleSelectParticipant}
             onAdminSyncOwnPredictions={() => setShowAdminSyncModal(true)}
           />
-
-          {/* Custom Pool rules sheet */}
-          <div className="bg-bg-card border border-slate-800 rounded-sm p-4.5 shadow-md">
-            <h4 className="text-[10px] uppercase font-black tracking-widest text-[#E2E8F0] font-mono mb-3.5 flex items-center gap-1.5 pb-2 border-b border-slate-950">
-              <GraduationCap className="text-brand-cyan shrink-0" size={13} />
-              Reglamento Geohazard
-            </h4>
-            <ul className="space-y-3 text-[11px] text-slate-400 leading-relaxed font-sans">
-              <li className="flex gap-2">
-                <span className="text-brand-primary font-bold shrink-0">■</span>
-                <span>
-                  <strong>Acierto de Ganador (+1 pt):</strong> Sí aciertas quién gana (o empate).
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-brand-primary font-bold shrink-0">■</span>
-                <span>
-                  <strong>Marcador Exacto (+1 pt):</strong> Sí aciertas los goles exactos.
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-brand-primary font-bold shrink-0">■</span>
-                <span>
-                  <strong>Clasificados (+1 pt):</strong> Por cada país en fases de eliminación directa.
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-brand-primary font-bold shrink-0">■</span>
-                <span>
-                  <strong>Empate en Eliminatoria (+1 pt):</strong> Si predices empate en eliminación directa y aciertas quién avanza por penales.
-                </span>
-              </li>
-              <li className="flex gap-2 border-t border-slate-900 pt-2.5">
-                <span className="text-brand-amber font-bold shrink-0">▲</span>
-                <span>
-                  <strong>Cierre de Partido:</strong> Autocierre <strong>5 minutos antes</strong>.
-                </span>
-              </li>
-              <li className="flex gap-2">
-                <span className="text-brand-amber font-bold shrink-0">▲</span>
-                <span>
-                  <strong>Cartilla Completa:</strong> Pendientes se auto-completan con resultados aleatorios al inicio del mundial.
-                </span>
-              </li>
-            </ul>
-          </div>
 
         </aside>
       </main>
