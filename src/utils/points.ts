@@ -269,14 +269,25 @@ export function calculateParticipantPoints(
     return teams;
   };
 
-  // 2. Points for qualified teams (+1 for each team they guessed that actually reached that level)
-  const stages: Match['stage'][] = ['round_of_16', 'quarters', 'semis', 'final'];
-  stages.forEach((stg) => {
-    const actualTeams = getTeamsInStage(resolvedActual, stg);
-    const predictedTeams = getTeamsInStage(resolvedUser, stg);
+  // Helper to check if a stage has been fully completed
+  const isStageFinished = (matchesList: Match[], stage: Match['stage']): boolean => {
+    const stageMatches = matchesList.filter((m) => m.stage === stage);
+    return stageMatches.length > 0 && stageMatches.every((m) => m.homeScore !== null && m.awayScore !== null);
+  };
 
-    // If actual has teams loaded (i.e. matches have been input for group stage), compare
-    if (actualTeams.size > 0) {
+  // 2. Points for qualified teams (+1 for each team they guessed that actually reached that level)
+  const stages: { current: Match['stage']; requiredPrevious: Match['stage'] }[] = [
+    { current: 'round_of_16', requiredPrevious: 'groups' },
+    { current: 'quarters', requiredPrevious: 'round_of_16' },
+    { current: 'semis', requiredPrevious: 'quarters' },
+    { current: 'final', requiredPrevious: 'semis' }
+  ];
+
+  stages.forEach(({ current, requiredPrevious }) => {
+    if (isStageFinished(actualMatches, requiredPrevious)) {
+      const actualTeams = getTeamsInStage(resolvedActual, current);
+      const predictedTeams = getTeamsInStage(resolvedUser, current);
+
       predictedTeams.forEach((teamId) => {
         if (actualTeams.has(teamId)) {
           correctQualifiedTeams += 1;
