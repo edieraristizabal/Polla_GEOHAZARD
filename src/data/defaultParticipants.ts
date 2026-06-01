@@ -1,7 +1,8 @@
+import { Match, Participant } from '../types';
 import preseeded from './participants.json';
 
 export function getPreseededParticipants(matches: Match[]): Participant[] {
-  return preseeded as Participant[];
+  return preseeded as unknown as Participant[];
 }
 
 // Ensure the email is standard lowercase

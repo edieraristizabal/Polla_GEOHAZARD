@@ -5,6 +5,7 @@ import { Leaderboard } from './components/Leaderboard';
 import { MatchList } from './components/MatchList';
 import { UserProfile } from './components/UserProfile';
 import { MatchAdmin } from './components/MatchAdmin';
+import { GroupStandingsGrid } from './components/GroupStandingsGrid';
 import { INITIAL_MATCHES } from './data/matches';
 import { getPreseededParticipants } from './data/defaultParticipants';
 import { Participant, Match, TournamentConfig, Team } from './types';
@@ -18,7 +19,7 @@ import {
 
 // May 31, 2026 - 11 days before the Cup!
 const INITIAL_SIM_TIME = '2026-05-31T16:18:19Z';
-const WC_START_TIME = '2026-06-11T18:00:00Z';
+const WC_START_TIME = '2026-06-11T15:00:00Z';
 
 export default function App() {
   // --- STATE ---
@@ -32,6 +33,7 @@ export default function App() {
   });
 
   const [selectedGroupStandings, setSelectedGroupStandings] = useState<string>('A');
+  const [activeMainTab, setActiveMainTab] = useState<'matches' | 'standings'>('matches');
 
   // --- UTILITY TO COMMENCE RESOLUTION PIPELINE ---
   const runRecalculation = (currentMatches: Match[], currentParticipants: Participant[]): { resolvedMatches: Match[], updatedParticipants: Participant[] } => {
@@ -820,16 +822,44 @@ export default function App() {
             activeParticipantId={activeParticipantId}
           />
 
+          {/* Navigation Tabs for left column */}
+          <div className="flex border-b border-slate-900 bg-bg-card p-1 rounded-sm gap-1">
+            <button
+              onClick={() => setActiveMainTab('matches')}
+              className={`flex-1 sm:flex-initial px-5 py-2.5 text-[11px] uppercase font-black font-mono tracking-wider transition cursor-pointer select-none ${
+                activeMainTab === 'matches'
+                  ? 'bg-brand-primary text-black'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+              }`}
+            >
+              📅 Partidos y Predicciones
+            </button>
+            <button
+              onClick={() => setActiveMainTab('standings')}
+              className={`flex-1 sm:flex-initial px-5 py-2.5 text-[11px] uppercase font-black font-mono tracking-wider transition cursor-pointer select-none ${
+                activeMainTab === 'standings'
+                  ? 'bg-brand-primary text-black'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+              }`}
+            >
+              📊 Clasificación de Grupos
+            </button>
+          </div>
+
           {/* Match selection card list */}
-          <MatchList
-            matches={matches}
-            predictions={predictionsActive}
-            activeParticipant={activeUser}
-            currentSimulatedTime={config.currentSimulatedTime}
-            isWorldCupStarted={config.isWorldCupStarted}
-            onSavePrediction={handleSavePrediction}
-            onRandomizeRemaining={handleRandomizeRemaining}
-          />
+          {activeMainTab === 'matches' ? (
+            <MatchList
+              matches={matches}
+              predictions={predictionsActive}
+              activeParticipant={activeUser}
+              currentSimulatedTime={config.currentSimulatedTime}
+              isWorldCupStarted={config.isWorldCupStarted}
+              onSavePrediction={handleSavePrediction}
+              onRandomizeRemaining={handleRandomizeRemaining}
+            />
+          ) : (
+            <GroupStandingsGrid matches={matches} />
+          )}
 
           {/* Dedicated Admin simulator */}
           {activeParticipantId === 'edieraristizabal@gmail.com' && (
