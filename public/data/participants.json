@@ -1,1 +1,555 @@
-[]
+[
+  {
+    "id": "edieraristizabal@gmail.com",
+    "name": "Edier Aristizabal",
+    "email": "edieraristizabal@gmail.com",
+    "avatarUrl": "av_7",
+    "predictions": {
+      "M_A1": {
+        "matchId": "M_A1",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_A2": {
+        "matchId": "M_A2",
+        "homeScore": 2,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_B1": {
+        "matchId": "M_B1",
+        "homeScore": 3,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_B2": {
+        "matchId": "M_B2",
+        "homeScore": 3,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_C1": {
+        "matchId": "M_C1",
+        "homeScore": 2,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_C2": {
+        "matchId": "M_C2",
+        "homeScore": 3,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_D1": {
+        "matchId": "M_D1",
+        "homeScore": 3,
+        "awayScore": 3,
+        "winnerIdToAdvance": "ENG"
+      },
+      "M_D2": {
+        "matchId": "M_D2",
+        "homeScore": 2,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_E1": {
+        "matchId": "M_E1",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "JPN"
+      },
+      "M_E2": {
+        "matchId": "M_E2",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_F1": {
+        "matchId": "M_F1",
+        "homeScore": 2,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_F2": {
+        "matchId": "M_F2",
+        "homeScore": 3,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_G1": {
+        "matchId": "M_G1",
+        "homeScore": 0,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_G2": {
+        "matchId": "M_G2",
+        "homeScore": 2,
+        "awayScore": 2,
+        "winnerIdToAdvance": "GHA"
+      },
+      "M_H1": {
+        "matchId": "M_H1",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_H2": {
+        "matchId": "M_H2",
+        "homeScore": 2,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_I1": {
+        "matchId": "M_I1",
+        "homeScore": 3,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_I2": {
+        "matchId": "M_I2",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "COL"
+      },
+      "M_J1": {
+        "matchId": "M_J1",
+        "homeScore": 2,
+        "awayScore": 2,
+        "winnerIdToAdvance": "NED"
+      },
+      "M_J2": {
+        "matchId": "M_J2",
+        "homeScore": 2,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_K1": {
+        "matchId": "M_K1",
+        "homeScore": 2,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_K2": {
+        "matchId": "M_K2",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "ALG"
+      },
+      "M_L1": {
+        "matchId": "M_L1",
+        "homeScore": 2,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_L2": {
+        "matchId": "M_L2",
+        "homeScore": 2,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_OF1": {
+        "matchId": "M_OF1",
+        "homeScore": 3,
+        "awayScore": 4,
+        "winnerIdToAdvance": null
+      },
+      "M_OF2": {
+        "matchId": "M_OF2",
+        "homeScore": 1,
+        "awayScore": 4,
+        "winnerIdToAdvance": null
+      },
+      "M_OF3": {
+        "matchId": "M_OF3",
+        "homeScore": 2,
+        "awayScore": 2,
+        "winnerIdToAdvance": "CRC"
+      },
+      "M_OF4": {
+        "matchId": "M_OF4",
+        "homeScore": 1,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_OF5": {
+        "matchId": "M_OF5",
+        "homeScore": 1,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_OF6": {
+        "matchId": "M_OF6",
+        "homeScore": 2,
+        "awayScore": 2,
+        "winnerIdToAdvance": "SCO"
+      },
+      "M_OF7": {
+        "matchId": "M_OF7",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "CMR"
+      },
+      "M_OF8": {
+        "matchId": "M_OF8",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "FRA"
+      },
+      "M_QF1": {
+        "matchId": "M_QF1",
+        "homeScore": 2,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_QF2": {
+        "matchId": "M_QF2",
+        "homeScore": 3,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_QF3": {
+        "matchId": "M_QF3",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_QF4": {
+        "matchId": "M_QF4",
+        "homeScore": 0,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_SF1": {
+        "matchId": "M_SF1",
+        "homeScore": 3,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_SF2": {
+        "matchId": "M_SF2",
+        "homeScore": 1,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_F": {
+        "matchId": "M_F",
+        "homeScore": 0,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_A3": {
+        "matchId": "M_A3",
+        "homeScore": 2,
+        "awayScore": 2,
+        "winnerIdToAdvance": "MEX"
+      },
+      "M_A4": {
+        "matchId": "M_A4",
+        "homeScore": 2,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_A5": {
+        "matchId": "M_A5",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_A6": {
+        "matchId": "M_A6",
+        "homeScore": 0,
+        "awayScore": 4,
+        "winnerIdToAdvance": null
+      },
+      "M_B3": {
+        "matchId": "M_B3",
+        "homeScore": 2,
+        "awayScore": 2,
+        "winnerIdToAdvance": "CAN"
+      },
+      "M_B4": {
+        "matchId": "M_B4",
+        "homeScore": 0,
+        "awayScore": 0,
+        "winnerIdToAdvance": "SUI"
+      },
+      "M_B5": {
+        "matchId": "M_B5",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_B6": {
+        "matchId": "M_B6",
+        "homeScore": 0,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_C3": {
+        "matchId": "M_C3",
+        "homeScore": 2,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_C4": {
+        "matchId": "M_C4",
+        "homeScore": 0,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_C5": {
+        "matchId": "M_C5",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_C6": {
+        "matchId": "M_C6",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "MAR"
+      },
+      "M_D3": {
+        "matchId": "M_D3",
+        "homeScore": 0,
+        "awayScore": 0,
+        "winnerIdToAdvance": "AUS"
+      },
+      "M_D4": {
+        "matchId": "M_D4",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "TUR"
+      },
+      "M_D5": {
+        "matchId": "M_D5",
+        "homeScore": 3,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_D6": {
+        "matchId": "M_D6",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_E3": {
+        "matchId": "M_E3",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "CIV"
+      },
+      "M_E4": {
+        "matchId": "M_E4",
+        "homeScore": 3,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_E5": {
+        "matchId": "M_E5",
+        "homeScore": 1,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_E6": {
+        "matchId": "M_E6",
+        "homeScore": 1,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_F3": {
+        "matchId": "M_F3",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "TUN"
+      },
+      "M_F4": {
+        "matchId": "M_F4",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_F5": {
+        "matchId": "M_F5",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "SWE"
+      },
+      "M_F6": {
+        "matchId": "M_F6",
+        "homeScore": 0,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_G3": {
+        "matchId": "M_G3",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "IRN"
+      },
+      "M_G4": {
+        "matchId": "M_G4",
+        "homeScore": 2,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_G5": {
+        "matchId": "M_G5",
+        "homeScore": 3,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_G6": {
+        "matchId": "M_G6",
+        "homeScore": 2,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_H3": {
+        "matchId": "M_H3",
+        "homeScore": 3,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_H4": {
+        "matchId": "M_H4",
+        "homeScore": 2,
+        "awayScore": 4,
+        "winnerIdToAdvance": null
+      },
+      "M_H5": {
+        "matchId": "M_H5",
+        "homeScore": 2,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_H6": {
+        "matchId": "M_H6",
+        "homeScore": 2,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_I3": {
+        "matchId": "M_I3",
+        "homeScore": 0,
+        "awayScore": 0,
+        "winnerIdToAdvance": "IRQ"
+      },
+      "M_I4": {
+        "matchId": "M_I4",
+        "homeScore": 0,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_I5": {
+        "matchId": "M_I5",
+        "homeScore": 2,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_I6": {
+        "matchId": "M_I6",
+        "homeScore": 2,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_J3": {
+        "matchId": "M_J3",
+        "homeScore": 1,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_J4": {
+        "matchId": "M_J4",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_J5": {
+        "matchId": "M_J5",
+        "homeScore": 0,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_J6": {
+        "matchId": "M_J6",
+        "homeScore": 1,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_K3": {
+        "matchId": "M_K3",
+        "homeScore": 1,
+        "awayScore": 3,
+        "winnerIdToAdvance": null
+      },
+      "M_K4": {
+        "matchId": "M_K4",
+        "homeScore": 1,
+        "awayScore": 4,
+        "winnerIdToAdvance": null
+      },
+      "M_K5": {
+        "matchId": "M_K5",
+        "homeScore": 3,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_K6": {
+        "matchId": "M_K6",
+        "homeScore": 0,
+        "awayScore": 0,
+        "winnerIdToAdvance": "COD"
+      },
+      "M_L3": {
+        "matchId": "M_L3",
+        "homeScore": 1,
+        "awayScore": 2,
+        "winnerIdToAdvance": null
+      },
+      "M_L4": {
+        "matchId": "M_L4",
+        "homeScore": 0,
+        "awayScore": 1,
+        "winnerIdToAdvance": null
+      },
+      "M_L5": {
+        "matchId": "M_L5",
+        "homeScore": 1,
+        "awayScore": 0,
+        "winnerIdToAdvance": null
+      },
+      "M_L6": {
+        "matchId": "M_L6",
+        "homeScore": 1,
+        "awayScore": 1,
+        "winnerIdToAdvance": "GHA"
+      }
+    },
+    "points": 0,
+    "stats": {
+      "correctWinner": 0,
+      "correctExactScore": 0,
+      "correctQualifiedTeams": 0
+    },
+    "hasAutoFilled": false,
+    "isCompleted": true
+  },
+  {
+    "id": "ezabaleta@unal.edu.co",
+    "name": "Erluan",
+    "email": "ezabaleta@unal.edu.co",
+    "avatarUrl": "av_1",
+    "predictions": {},
+    "points": 0,
+    "stats": {
+      "correctWinner": 0,
+      "correctExactScore": 0,
+      "correctQualifiedTeams": 0
+    },
+    "hasAutoFilled": false,
+    "isCompleted": false
+  }
+]
