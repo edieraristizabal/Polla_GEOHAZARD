@@ -14,8 +14,6 @@ interface MatchAdminProps {
   onRejectParticipantDirectly: (email: string) => void;
   onUpdateConfig: (updated: Partial<TournamentConfig>) => void;
   onUpdateMatchScore: (matchId: string, homeScore: number, awayScore: number, winnerIdToAdvance?: string | null) => void;
-  onImportParticipant: (jsonStr: string) => boolean;
-  onClearAllParticipants: () => void;
 }
 
 export function MatchAdmin({
@@ -27,15 +25,12 @@ export function MatchAdmin({
   onApproveParticipantDirectly,
   onRejectParticipantDirectly,
   onUpdateConfig,
-  onUpdateMatchScore,
-  onImportParticipant,
-  onClearAllParticipants
+  onUpdateMatchScore
 }: MatchAdminProps) {
   const [selectedMatchId, setSelectedMatchId] = useState<string>('');
   const [homeScoreInput, setHomeScoreInput] = useState<string>('');
   const [awayScoreInput, setAwayScoreInput] = useState<string>('');
   const [winnerAdv, setWinnerAdv] = useState<string>('');
-  const [importJson, setImportJson] = useState<string>('');
   const [patInput, setPatInput] = useState<string>(githubPat);
 
   const [simDate, setSimDate] = useState<string>('2026-06-11');
@@ -416,68 +411,27 @@ export function MatchAdmin({
         </div>
       </div>
 
-      {/* Database control section */}
+      {/* Database backup section */}
       <div className="bg-[#0A0C10] p-4 rounded-sm border border-slate-850">
         <h4 className="text-[10px] uppercase tracking-widest text-[#F59E0B] font-mono font-black mb-3 flex items-center justify-between pb-2 border-b border-slate-950">
-          <span>📥 Importación / Respaldo de Base de Datos</span>
+          <span>📋 Copiar Base de Datos de Participantes</span>
         </h4>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label htmlFor="import-json" className="block text-[9px] uppercase font-mono font-bold tracking-wider text-slate-500 font-mono">
-              Pegar JSON de jugador
-            </label>
-            <textarea
-              id="import-json"
-              rows={3}
-              value={importJson}
-              onChange={(e) => setImportJson(e.target.value)}
-              placeholder='{ "name": "...", "email": "...", "predictions": {...} }'
-              className="w-full bg-black border border-slate-800 rounded-sm px-2.5 py-1.5 text-[10px] font-mono text-slate-300 outline-none focus:border-brand-amber resize-none"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                if (!importJson.trim()) return;
-                const success = onImportParticipant(importJson);
-                if (success) {
-                  alert("✅ Participante importado/actualizado con éxito.");
-                  setImportJson('');
-                } else {
-                  alert("❌ Formato JSON inválido.");
-                }
-              }}
-              className="w-full py-1.5 bg-[#10B981]/20 hover:bg-[#10B981]/30 border border-[#10B981]/30 text-[#10B981] hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition duration-150 cursor-pointer"
-            >
-              Cargar Participante
-            </button>
-          </div>
-
-          <div className="flex flex-col justify-between space-y-2">
-            <p className="text-[10px] text-slate-400 leading-relaxed font-sans font-normal">
-              Puedes copiar la base de datos oficial consolidada para respaldarla en tu archivo `src/data/participants.json`.
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(JSON.stringify(participants, null, 2))
-                    .then(() => alert("📋 Copiado al portapapeles."))
-                    .catch(() => alert("Error al copiar."));
-                }}
-                className="flex-1 py-2 bg-brand-amber/20 hover:bg-brand-amber/30 border border-brand-amber/30 text-brand-amber hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition text-center cursor-pointer"
-              >
-                📋 Copiar DB
-              </button>
-              <button
-                type="button"
-                onClick={onClearAllParticipants}
-                className="py-2 px-3 bg-red-950/20 hover:bg-red-950/30 border border-red-900/10 text-rose-400 hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition text-center cursor-pointer"
-              >
-                🗑️ Limpiar locales
-              </button>
-            </div>
-          </div>
+        <div className="space-y-3">
+          <p className="text-[10px] text-slate-400 leading-relaxed font-sans font-normal">
+            Copia el JSON consolidado de participantes y sus pronósticos actuales. Esto sirve como respaldo o para actualizar directamente el archivo estático local `src/data/participants.json` de tu código.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              navigator.clipboard.writeText(JSON.stringify(participants, null, 2))
+                .then(() => alert("📋 Base de datos JSON copiada al portapapeles con éxito."))
+                .catch(() => alert("Error al copiar al portapapeles."));
+            }}
+            className="w-full py-2 bg-brand-amber/20 hover:bg-brand-amber/30 border border-brand-amber/30 text-brand-amber hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition text-center cursor-pointer font-bold"
+          >
+            📋 Copiar JSON de Participantes
+          </button>
         </div>
       </div>
     </div>

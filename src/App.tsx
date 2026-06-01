@@ -842,8 +842,6 @@ export default function App() {
               onRejectParticipantDirectly={handleRejectParticipantDirectly}
               onUpdateConfig={handleUpdateConfig}
               onUpdateMatchScore={handleUpdateMatchScore}
-              onImportParticipant={handleImportParticipant}
-              onClearAllParticipants={handleClearAllParticipants}
             />
           )}
         </section>
