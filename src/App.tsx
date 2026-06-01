@@ -35,6 +35,13 @@ export default function App() {
   const [selectedGroupStandings, setSelectedGroupStandings] = useState<string>('A');
   const [activeMainTab, setActiveMainTab] = useState<'matches' | 'standings'>('matches');
 
+  const [githubPat, setGithubPat] = useState<string>(() => localStorage.getItem('geohazard_github_pat') || '');
+  const [pendingApproval, setPendingApproval] = useState<{ name: string; email: string; avatar: string } | null>(null);
+  const [pendingImport, setPendingImport] = useState<{ email: string; data: string } | null>(null);
+  const [isCommiting, setIsCommiting] = useState<boolean>(false);
+  const [adminPasswordInput, setAdminPasswordInput] = useState<string>('');
+  const [githubPatInput, setGithubPatInput] = useState<string>(() => localStorage.getItem('geohazard_github_pat') || '');
+
   // --- UTILITY TO COMMENCE RESOLUTION PIPELINE ---
   const runRecalculation = (currentMatches: Match[], currentParticipants: Participant[]): { resolvedMatches: Match[], updatedParticipants: Participant[] } => {
     // Resolve teams playing in Octavos -> Final
@@ -51,6 +58,90 @@ export default function App() {
     });
 
     return { resolvedMatches: resolved, updatedParticipants: updated };
+  };
+
+  const saveParticipantsToGitHub = async (updatedList: Participant[], token: string) => {
+    const owner = 'edieraristizabal';
+    const repo = 'Polla_GEOHAZARD';
+    const path = 'public/data/participants.json';
+    const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+    
+    const content = JSON.stringify(updatedList, null, 2);
+    
+    // 1. Get current SHA
+    let sha = '';
+    try {
+      const res = await fetch(url, {
+        headers: { 
+          Authorization: `token ${token}`,
+          Accept: 'application/vnd.github.v3+json'
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        sha = data.sha;
+      }
+    } catch (e) {
+      console.error('Error fetching SHA from GitHub', e);
+    }
+    
+    // 2. Commit update
+    const body = {
+      message: 'admin: update participants list from app UI',
+      content: btoa(unescape(encodeURIComponent(content))),
+      sha: sha || undefined
+    };
+    
+    const commitRes = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `token ${token}`,
+        'Content-Type': 'application/json',
+        Accept: 'application/vnd.github.v3+json'
+      },
+      body: JSON.stringify(body)
+    });
+    
+    if (!commitRes.ok) {
+      const err = await commitRes.json();
+      throw new Error(err.message || 'Error al guardar en GitHub');
+    }
+  };
+
+  const handleApproveParticipantDirectly = (email: string) => {
+    const p = participants.find(part => part.email.toLowerCase() === email.toLowerCase());
+    if (p) {
+      setPendingApproval({ name: p.name, email: p.email, avatar: p.avatarUrl });
+    }
+  };
+
+  const handleRejectParticipantDirectly = async (email: string) => {
+    if (!window.confirm(`¿Estás seguro de rechazar/eliminar al participante con correo: ${email}?`)) {
+      return;
+    }
+    const token = githubPat || prompt('Ingrese su GitHub Personal Access Token (PAT) para eliminar de GitHub permanentemente:');
+    if (!token) return;
+    
+    setIsCommiting(true);
+    try {
+      const nextParticipants = participants.filter(p => p.email.toLowerCase() !== email.toLowerCase());
+      const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(matches, nextParticipants);
+      
+      await saveParticipantsToGitHub(finalPart, token);
+      
+      setParticipants(finalPart);
+      localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
+      
+      if (token !== githubPat) {
+        setGithubPat(token);
+        localStorage.setItem('geohazard_github_pat', token);
+      }
+      alert('Participante rechazado/eliminado correctamente.');
+    } catch (e: any) {
+      alert(`Error al rechazar en GitHub: ${e.message}`);
+    } finally {
+      setIsCommiting(false);
+    }
   };
 
   // --- INITIALIZATION ---
@@ -141,54 +232,21 @@ export default function App() {
       }
       setActiveParticipantId(finalActiveId);
 
-      // 5. Check URL parameters for approval requests
+      // 5. Check URL parameters for approval requests & predictions import
       const urlParams = new URLSearchParams(window.location.search);
       const approveName = urlParams.get('approve_name');
       const approveEmail = urlParams.get('approve_email');
       const approveAvatar = urlParams.get('approve_avatar');
+      
+      const importPredictions = urlParams.get('import_predictions');
+      const importEmail = urlParams.get('email');
+      const importData = urlParams.get('data');
 
       if (approveName && approveEmail && approveAvatar) {
-        const code = prompt(`Solicitud de inscripción para ${approveName} (${approveEmail}).\nIngrese la contraseña de administrador para aprobar:`);
-        if (code === 'geohazard2026') {
-          let updatedList = [...updatedParticipants];
-          const index = updatedList.findIndex(p => p.email.toLowerCase() === approveEmail.toLowerCase());
-          
-          if (index >= 0) {
-            updatedList[index] = {
-              ...updatedList[index],
-              status: undefined // Approved
-            };
-          } else {
-            updatedList.push({
-              id: approveEmail.toLowerCase(),
-              name: approveName,
-              email: approveEmail.toLowerCase(),
-              avatarUrl: approveAvatar,
-              predictions: {},
-              points: 0,
-              stats: { correctWinner: 0, correctExactScore: 0, correctQualifiedTeams: 0 },
-              hasAutoFilled: false,
-              isCompleted: false,
-              status: undefined // Approved
-            });
-          }
-
-          const recalc = runRecalculation(resolvedMatches, updatedList);
-          setParticipants(recalc.updatedParticipants);
-          localStorage.setItem('geohazard_participants', JSON.stringify(recalc.updatedParticipants));
-          
-          setActiveParticipantId('edieraristizabal@gmail.com');
-          localStorage.setItem('geohazard_active_id', 'edieraristizabal@gmail.com');
-
-          alert(`Participante ${approveName} aprobado con éxito.`);
-
-          const notifySubject = encodeURIComponent('Inscripción Aprobada - Polla Geohazard');
-          const notifyBody = encodeURIComponent(`Hola ${approveName},\n\nTu inscripción en la Polla Geohazard ha sido aprobada por el administrador.\n\nYa puedes ingresar a la aplicación y registrar tus predicciones: https://edieraristizabal.github.io/Polla_GEOHAZARD/\n\n¡Buena suerte!`);
-          window.open(`mailto:${approveEmail}?subject=${notifySubject}&body=${notifyBody}`, '_blank');
-        } else {
-          alert('Contraseña de administrador incorrecta. No se pudo realizar la aprobación.');
-        }
-
+        setPendingApproval({ name: approveName, email: approveEmail, avatar: approveAvatar });
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (importPredictions === 'true' && importEmail && importData) {
+        setPendingImport({ email: importEmail, data: importData });
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
@@ -398,8 +456,9 @@ export default function App() {
     const kickoff = new Date(m.kickoffTime).getTime();
     const nowSim = new Date(config.currentSimulatedTime).getTime();
     const FIVE_MINUTES = 5 * 60 * 1000;
+    const effectiveNow = Math.max(Date.now(), nowSim);
 
-    if (kickoff - nowSim < FIVE_MINUTES) {
+    if (kickoff - effectiveNow < FIVE_MINUTES) {
       alert("⚠️ REGLAMENTO DE REGISTRO LOCKOUT: Los pronósticos deben ingresarse hasta un máximo de 5 minutos antes del partido oficial.");
       return;
     }
@@ -505,247 +564,7 @@ export default function App() {
     localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
     localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
   };
-
-  // ADMIN: Simulated full group stage scores generator
-  const handleSimulateGroups = () => {
-    // 1. Advance clock to Octavos kickoff
-    const simTime = '2026-06-25T12:00:00Z';
-    
-    // 2. Auto-generate results for Groups matches
-    const updatedMatches = matches.map((m) => {
-      if (m.stage === 'groups') {
-        // Generate realistic scores e.g. 0-3
-        const scoreH = Math.floor(Math.random() * 4);
-        const scoreA = Math.floor(Math.random() * 4);
-        return {
-          ...m,
-          homeScore: scoreH,
-          awayScore: scoreA
-        };
-      }
-      return m;
-    });
-
-    // 3. For any user who didn't fill out predictions, enforce the random auto-fill before calculating points!
-    const updatedParticipants = participants.map((p) => {
-      let incomplete = false;
-      const predictionsCopy = { ...p.predictions };
-
-      matches.forEach((m) => {
-        const pred = predictionsCopy[m.id];
-        if (!pred || pred.homeScore === null || pred.awayScore === null) {
-          incomplete = true;
-        }
-      });
-
-      if (incomplete) {
-        const rand = generateRandomPredictions(matches);
-        matches.forEach((m) => {
-          const pred = predictionsCopy[m.id];
-          if (!pred || pred.homeScore === null || pred.awayScore === null) {
-            predictionsCopy[m.id] = rand[m.id];
-          }
-        });
-
-        return {
-          ...p,
-          predictions: predictionsCopy,
-          hasAutoFilled: true,
-          isCompleted: true
-        };
-      }
-      return p;
-    });
-
-    const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(updatedMatches, updatedParticipants);
-
-    setMatches(resolvedMatches);
-    setParticipants(finalPart);
-    setConfig({
-      startedAt: WC_START_TIME,
-      currentSimulatedTime: simTime,
-      isWorldCupStarted: true
-    });
-
-    localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
-    localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
-    localStorage.setItem('geohazard_config', JSON.stringify({
-      startedAt: WC_START_TIME,
-      currentSimulatedTime: simTime,
-      isWorldCupStarted: true
-    }));
-  };
-
-  // ADMIN: Simulates all matches up to the Champion!
-  const handleSimulateFullTournament = () => {
-    // Force Groups simulation first
-    let stageMatches = [...matches];
-
-    // Helper to generate a score that is not a draw for non-group matches, or resolve via penalties
-    const simGame = (m: Match) => {
-      const scoreH = Math.floor(Math.random() * 4);
-      const scoreA = Math.floor(Math.random() * 4);
-      let winnerId: string | null = null;
-      if (scoreH === scoreA) {
-        winnerId = Math.random() > 0.5 ? m.homeTeamId || null : m.awayTeamId || null;
-      }
-      return { home: scoreH, away: scoreA, winner: winnerId };
-    };
-
-    // Simulate in sequence (Groups, then Octavos, then Quarters, Semis, Final)
-    // Run Groups
-    stageMatches = stageMatches.map((m) => {
-      if (m.stage === 'groups') {
-        const h = Math.floor(Math.random() * 4);
-        const a = Math.floor(Math.random() * 4);
-        return { ...m, homeScore: h, awayScore: a };
-      }
-      return m;
-    });
-
-    // Populate Octavos de Final slots
-    let tempResolved = resolveTournamentPositions(stageMatches);
-
-    // Run Octavos
-    tempResolved = tempResolved.map((m) => {
-      if (m.stage === 'round_of_16') {
-        const sim = simGame(m);
-        return { ...m, homeScore: sim.home, awayScore: sim.away, winnerIdToAdvance: sim.winner };
-      }
-      return m;
-    });
-
-    // Populate Quarters slots
-    tempResolved = resolveTournamentPositions(tempResolved);
-
-    // Run Quarters
-    tempResolved = tempResolved.map((m) => {
-      if (m.stage === 'quarters') {
-        const sim = simGame(m);
-        return { ...m, homeScore: sim.home, awayScore: sim.away, winnerIdToAdvance: sim.winner };
-      }
-      return m;
-    });
-
-    // Populate Semis
-    tempResolved = resolveTournamentPositions(tempResolved);
-
-    // Run Semis
-    tempResolved = tempResolved.map((m) => {
-      if (m.stage === 'semis') {
-        const sim = simGame(m);
-        return { ...m, homeScore: sim.home, awayScore: sim.away, winnerIdToAdvance: sim.winner };
-      }
-      return m;
-    });
-
-    // Populate Final
-    tempResolved = resolveTournamentPositions(tempResolved);
-
-    // Run Final
-    tempResolved = tempResolved.map((m) => {
-      if (m.stage === 'final') {
-        const sim = simGame(m);
-        return { ...m, homeScore: sim.home, awayScore: sim.away, winnerIdToAdvance: sim.winner };
-      }
-      return m;
-    });
-
-    // Recalculate everything!
-    // Handle late competitors autofill:
-    const updatedParticipants = participants.map((p) => {
-      let incomplete = false;
-      const predictionsCopy = { ...p.predictions };
-
-      matches.forEach((m) => {
-        const pred = predictionsCopy[m.id];
-        if (!pred || pred.homeScore === null || pred.awayScore === null) {
-          incomplete = true;
-        }
-      });
-
-      if (incomplete) {
-        const rand = generateRandomPredictions(matches);
-        matches.forEach((m) => {
-          const pred = predictionsCopy[m.id];
-          if (!pred || pred.homeScore === null || pred.awayScore === null) {
-            predictionsCopy[m.id] = rand[m.id];
-          }
-        });
-
-        return {
-          ...p,
-          predictions: predictionsCopy,
-          hasAutoFilled: true,
-          isCompleted: true
-        };
-      }
-      return p;
-    });
-
-    const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(tempResolved, updatedParticipants);
-
-    const simTimeFinal = '2026-07-20T12:00:00Z'; // Time after physical final
-
-    setMatches(resolvedMatches);
-    setParticipants(finalPart);
-    setConfig({
-      startedAt: WC_START_TIME,
-      currentSimulatedTime: simTimeFinal,
-      isWorldCupStarted: true
-    });
-
-    localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
-    localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
-    localStorage.setItem('geohazard_config', JSON.stringify({
-      startedAt: WC_START_TIME,
-      currentSimulatedTime: simTimeFinal,
-      isWorldCupStarted: true
-    }));
-  };
-
-  // ADMIN: Total reset back to zero
-  const handleResetTournament = () => {
-    const rawMatches = INITIAL_MATCHES.map((m) => {
-      return {
-        ...m,
-        homeScore: null,
-        awayScore: null,
-        winnerIdToAdvance: null,
-        homeTeamId: m.stage === 'groups' ? m.homeTeamId : null,
-        awayTeamId: m.stage === 'groups' ? m.awayTeamId : null
-      };
-    });
-
-    // Clear actual points but preserve user accounts and custom predictions if they were made before starting!
-    const targetParticipants = participants.map((p) => {
-      return {
-        ...p,
-        points: 0,
-        stats: { correctWinner: 0, correctExactScore: 0, correctQualifiedTeams: 0 },
-        hasAutoFilled: false,
-        isCompleted: Object.keys(p.predictions).length === rawMatches.length
-      };
-    });
-
-    const { resolvedMatches, updatedParticipants } = runRecalculation(rawMatches, targetParticipants);
-
-    setMatches(resolvedMatches);
-    setParticipants(updatedParticipants);
-    setConfig({
-      startedAt: WC_START_TIME,
-      currentSimulatedTime: INITIAL_SIM_TIME,
-      isWorldCupStarted: false
-    });
-
-    localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
-    localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
-    localStorage.setItem('geohazard_config', JSON.stringify({
-      startedAt: WC_START_TIME,
-      currentSimulatedTime: INITIAL_SIM_TIME,
-      isWorldCupStarted: false
-    }));
-  };
+  
 
   // ADMIN: Import player cartilla from JSON
   const handleImportParticipant = (jsonStr: string): boolean => {
@@ -792,6 +611,152 @@ export default function App() {
       localStorage.removeItem('geohazard_active_id');
     }
   };
+
+  const handleApproveSubmission = async () => {
+    if (!pendingApproval) return;
+    if (adminPasswordInput !== 'geohazard2026') {
+      alert('Contraseña de administrador incorrecta.');
+      return;
+    }
+    const token = githubPatInput || githubPat;
+    if (!token) {
+      alert('Se requiere un GitHub Personal Access Token (PAT) para guardar el cambio en el repositorio.');
+      return;
+    }
+    
+    setIsCommiting(true);
+    try {
+      let updatedList = [...participants];
+      const index = updatedList.findIndex(p => p.email.toLowerCase() === pendingApproval.email.toLowerCase());
+      
+      if (index >= 0) {
+        updatedList[index] = {
+          ...updatedList[index],
+          status: undefined // Approved
+        };
+      } else {
+        updatedList.push({
+          id: pendingApproval.email.toLowerCase(),
+          name: pendingApproval.name,
+          email: pendingApproval.email.toLowerCase(),
+          avatarUrl: pendingApproval.avatar,
+          predictions: {},
+          points: 0,
+          stats: { correctWinner: 0, correctExactScore: 0, correctQualifiedTeams: 0 },
+          hasAutoFilled: false,
+          isCompleted: false,
+          status: undefined // Approved
+        });
+      }
+
+      const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(matches, updatedList);
+      
+      // Save to GitHub
+      await saveParticipantsToGitHub(finalPart, token);
+      
+      setParticipants(finalPart);
+      localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
+      
+      setGithubPat(token);
+      localStorage.setItem('geohazard_github_pat', token);
+      
+      // Notify participant via mailto link
+      const notifySubject = encodeURIComponent('Inscripción Aprobada - Polla Geohazard');
+      const notifyBody = encodeURIComponent(`Hola ${pendingApproval.name},\n\nTu inscripción en la Polla Geohazard ha sido aprobada por el administrador.\n\nYa puedes ingresar a la aplicación y registrar tus predicciones:\nhttps://edieraristizabal.github.io/Polla_GEOHAZARD/\n\n¡Buena suerte!`);
+      window.open(`mailto:${pendingApproval.email}?subject=${notifySubject}&body=${notifyBody}`, '_blank');
+      
+      alert(`Participante ${pendingApproval.name} aprobado y sincronizado en GitHub.`);
+      setPendingApproval(null);
+      setAdminPasswordInput('');
+    } catch (e: any) {
+      alert(`Error al guardar en GitHub: ${e.message}`);
+    } finally {
+      setIsCommiting(false);
+    }
+  };
+
+  const handleImportSubmission = async () => {
+    if (!pendingImport) return;
+    const token = githubPatInput || githubPat;
+    if (!token) {
+      alert('Se requiere un GitHub Personal Access Token (PAT) para guardar el cambio en el repositorio.');
+      return;
+    }
+    
+    setIsCommiting(true);
+    try {
+      // Decode predictions from base64
+      let decodedPredictions: Record<string, { homeScore: number | null; awayScore: number | null; winnerIdToAdvance?: string | null }> = {};
+      try {
+        const decodedStr = decodeURIComponent(atob(pendingImport.data));
+        decodedPredictions = JSON.parse(decodedStr);
+      } catch (e) {
+        throw new Error('Formato de datos de pronósticos inválido o corrupto.');
+      }
+      
+      const emailLower = pendingImport.email.toLowerCase();
+      const existingUser = participants.find(p => p.email.toLowerCase() === emailLower);
+      if (!existingUser) {
+        throw new Error(`El participante con correo ${pendingImport.email} no existe o no ha sido aprobado aún.`);
+      }
+      
+      // Update predictions, ensuring lockout rule isn't bypassed for any match that is within 5 minutes or already played
+      const nextPredictions = { ...existingUser.predictions };
+      let updatedCount = 0;
+      let blockedCount = 0;
+      
+      const nowSim = new Date(config.currentSimulatedTime).getTime();
+      const effectiveNow = Math.max(Date.now(), nowSim);
+      const FIVE_MINUTES = 5 * 60 * 1000;
+      
+      Object.keys(decodedPredictions).forEach((matchId) => {
+        const m = matches.find(x => x.id === matchId);
+        if (m) {
+          const kickoff = new Date(m.kickoffTime).getTime();
+          if (kickoff - effectiveNow < FIVE_MINUTES) {
+            blockedCount++;
+          } else {
+            nextPredictions[matchId] = decodedPredictions[matchId];
+            updatedCount++;
+          }
+        }
+      });
+      
+      const updatedList = participants.map(p => {
+        if (p.email.toLowerCase() === emailLower) {
+          return {
+            ...p,
+            predictions: nextPredictions,
+            isCompleted: Object.keys(nextPredictions).length === matches.length
+          };
+        }
+        return p;
+      });
+      
+      const { resolvedMatches, updatedParticipants: finalPart } = runRecalculation(matches, updatedList);
+      
+      // Save to GitHub
+      await saveParticipantsToGitHub(finalPart, token);
+      
+      setParticipants(finalPart);
+      localStorage.setItem('geohazard_participants', JSON.stringify(finalPart));
+      
+      setGithubPat(token);
+      localStorage.setItem('geohazard_github_pat', token);
+      
+      let message = `Se importaron ${updatedCount} pronósticos con éxito.`;
+      if (blockedCount > 0) {
+        message += `\n⚠️ ${blockedCount} pronósticos fueron omitidos por estar bajo restricción de lockout (menos de 5 minutos para el partido).`;
+      }
+      alert(message);
+      setPendingImport(null);
+    } catch (e: any) {
+      alert(`Error al importar: ${e.message}`);
+    } finally {
+      setIsCommiting(false);
+    }
+  };
+
 
   // Active user's predictions list
   const activeUser = participants.find((p) => p.id === activeParticipantId) || null;
@@ -867,11 +832,16 @@ export default function App() {
               config={config}
               matches={matches}
               participants={participants}
+              githubPat={githubPat}
+              onUpdateGithubPat={(token) => {
+                setGithubPat(token);
+                setGithubPatInput(token);
+                localStorage.setItem('geohazard_github_pat', token);
+              }}
+              onApproveParticipantDirectly={handleApproveParticipantDirectly}
+              onRejectParticipantDirectly={handleRejectParticipantDirectly}
               onUpdateConfig={handleUpdateConfig}
               onUpdateMatchScore={handleUpdateMatchScore}
-              onSimulateGroups={handleSimulateGroups}
-              onSimulateFullTournament={handleSimulateFullTournament}
-              onResetTournament={handleResetTournament}
               onImportParticipant={handleImportParticipant}
               onClearAllParticipants={handleClearAllParticipants}
             />
@@ -881,7 +851,6 @@ export default function App() {
         {/* Right sidebar area: Profile, rules and real world standings solver */}
         <aside className="lg:col-span-4 space-y-6">
           
-          {/* Participant enrollment & profile overview */}
           <UserProfile
             activeParticipant={activeUser}
             participants={participants}
@@ -889,73 +858,6 @@ export default function App() {
             onRegisterParticipant={handleRegisterParticipant}
             onSelectParticipant={handleSelectParticipant}
           />
-
-          {/* World Cup 2026 Group state standing solver */}
-          <div className="bg-bg-card border border-slate-800 rounded-sm p-4.5 shadow-md">
-            <h4 className="text-[10px] uppercase font-black tracking-widest text-slate-500 font-mono mb-3.5 flex items-center justify-between pb-2 border-b border-slate-950">
-              <span>STANDINGS REALES</span>
-              <span className="text-[9px] text-brand-primary lowercase font-normal italic">en directo</span>
-            </h4>
-
-            {/* Select Group */}
-            <div className="flex gap-1 overflow-x-auto pb-2 mb-3 border-b border-slate-950 scrollbar-none">
-              {GROUPS.map((grp) => (
-                <button
-                  key={grp}
-                  onClick={() => setSelectedGroupStandings(grp)}
-                  className={`px-2.5 py-1 text-[11px] rounded-none transition uppercase font-black font-mono shrink-0 cursor-pointer ${
-                    selectedGroupStandings === grp
-                      ? 'bg-brand-primary text-black'
-                      : 'bg-[#0A0C10] text-slate-400 hover:text-white border border-slate-850'
-                  }`}
-                >
-                  G-{grp}
-                </button>
-              ))}
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="grid grid-cols-12 text-[9px] text-slate-500 font-mono font-black uppercase pb-1 border-b border-slate-955">
-                <span className="col-span-5">Equipo</span>
-                <span className="col-span-2 text-center">PJ</span>
-                <span className="col-span-3 text-center">DG (GF-GC)</span>
-                <span className="col-span-2 text-right">Pts</span>
-              </div>
-
-              {currentGroupStandings.map((st, index) => {
-                const team = TEAMS.find((t) => t.id === st.teamId);
-                const isQualifying = index < 2; // top 2 qualify
-                return (
-                  <div
-                     key={st.teamId}
-                     className="grid grid-cols-12 text-xs py-1.5 border-b border-slate-900/40 items-center font-medium"
-                  >
-                    <span className="col-span-5 truncate flex items-center gap-1.5">
-                      <span className={`text-[9px] font-mono font-bold text-center w-4 h-4 flex items-center justify-center rounded-none shrink-0 ${
-                        isQualifying ? 'bg-brand-primary/20 text-brand-primary border border-brand-primary/30' : 'bg-slate-950 text-slate-600 border border-slate-900'
-                      }`}>
-                        {index + 1}
-                      </span>
-                      <span className="text-lg filter drop-shadow">{team?.flagEmoji}</span>
-                      <span className="font-bold text-slate-300 font-mono">{team?.code}</span>
-                    </span>
-                    <span className="col-span-2 text-center font-mono text-slate-500">{st.gamesPlayed}</span>
-                    <span className="col-span-3 text-center font-mono text-[10px] text-slate-400">
-                      {st.goalDifference > 0 ? `+${st.goalDifference}` : st.goalDifference}{' '}
-                      <span className="text-[9px] text-slate-505">
-                        ({st.goalsFor}:{st.goalsAgainst})
-                      </span>
-                    </span>
-                    <span className="col-span-2 text-right font-mono font-bold text-slate-300">{st.points}</span>
-                  </div>
-                );
-              })}
-            </div>
-            
-            <p className="text-[9px] text-slate-500 font-mono mt-3.5 text-center leading-normal uppercase font-bold tracking-tight">
-              🏆 Los 2 mejores de cada grupo avanzan.
-            </p>
-          </div>
 
           {/* Custom Pool rules sheet */}
           <div className="bg-bg-card border border-slate-800 rounded-sm p-4.5 shadow-md">
@@ -1011,6 +913,152 @@ export default function App() {
         <p>© 2026 Geohazard Polla Mundialista. Todos los derechos reservados.</p>
         <p className="mt-1 text-slate-600 lowercase tracking-wide font-sans font-bold font-normal">Diseñado con precisión táctica y reglas inviolables.</p>
       </footer>
+
+      {/* MODAL: PENDING APPROVAL */}
+      {pendingApproval && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="bg-[#0f1219] border border-slate-800 rounded-lg p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-900">
+              <span className="text-xl font-sans">👤</span>
+              <div>
+                <h3 className="text-sm font-black font-mono uppercase tracking-wider text-slate-100">
+                  Aprobación de Inscripción
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Valida la solicitud para ingresar a la polla
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-[#080a0f] p-4 rounded border border-slate-900 flex items-center gap-3">
+              <img
+                src={`/data/avatars/${pendingApproval.avatar}`}
+                alt="Avatar"
+                className="w-12 h-12 rounded-full border border-brand-primary"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://api.dicebear.com/7.x/bottts/svg?seed=fallback';
+                }}
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-bold text-white truncate">{pendingApproval.name}</p>
+                <p className="text-[11px] text-slate-500 truncate">{pendingApproval.email}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                  Contraseña de Administrador
+                </label>
+                <input
+                  type="password"
+                  placeholder="Contraseña"
+                  value={adminPasswordInput}
+                  onChange={(e) => setAdminPasswordInput(e.target.value)}
+                  className="w-full bg-[#080a0f] border border-slate-800 text-xs px-3 py-2 rounded focus:outline-none focus:border-brand-primary text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                  GitHub Personal Access Token (PAT)
+                </label>
+                <input
+                  type="password"
+                  placeholder="ghp_..."
+                  value={githubPatInput}
+                  onChange={(e) => setGithubPatInput(e.target.value)}
+                  className="w-full bg-[#080a0f] border border-slate-800 text-xs px-3 py-2 rounded focus:outline-none focus:border-brand-primary text-white font-mono"
+                />
+                <p className="text-[9px] text-slate-500 mt-1 leading-normal">
+                  Necesario para actualizar el archivo `participants.json` directamente en el repositorio remoto.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => {
+                  setPendingApproval(null);
+                  setAdminPasswordInput('');
+                }}
+                disabled={isCommiting}
+                className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-[11px] font-black uppercase py-2 rounded transition cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleApproveSubmission}
+                disabled={isCommiting}
+                className="flex-1 bg-brand-primary hover:bg-brand-primary/80 text-black font-mono text-[11px] font-black uppercase py-2 rounded transition cursor-pointer disabled:opacity-50"
+              >
+                {isCommiting ? 'Guardando...' : 'Aprobar y Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: PENDING PREDICTIONS IMPORT */}
+      {pendingImport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="bg-[#0f1219] border border-slate-800 rounded-lg p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-900">
+              <span className="text-xl font-sans">📥</span>
+              <div>
+                <h3 className="text-sm font-black font-mono uppercase tracking-wider text-slate-100">
+                  Importación de Pronósticos
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Importar pronósticos enviados por correo
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-[#080a0f] p-3.5 rounded border border-slate-900">
+              <p className="text-[11px] text-slate-400 leading-normal">
+                Se detectó una solicitud de importación para el participante:
+              </p>
+              <p className="text-xs font-bold text-white font-mono mt-1 break-all">
+                {pendingImport.email}
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                GitHub Personal Access Token (PAT)
+              </label>
+              <input
+                type="password"
+                placeholder="ghp_..."
+                value={githubPatInput}
+                onChange={(e) => setGithubPatInput(e.target.value)}
+                className="w-full bg-[#080a0f] border border-slate-800 text-xs px-3 py-2 rounded focus:outline-none focus:border-brand-primary text-white font-mono"
+              />
+              <p className="text-[9px] text-slate-500 mt-1 leading-normal">
+                Necesario para actualizar el archivo `participants.json` directamente en el repositorio remoto.
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setPendingImport(null)}
+                disabled={isCommiting}
+                className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-[11px] font-black uppercase py-2 rounded transition cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleImportSubmission}
+                disabled={isCommiting}
+                className="flex-1 bg-brand-primary hover:bg-brand-primary/80 text-black font-mono text-[11px] font-black uppercase py-2 rounded transition cursor-pointer disabled:opacity-50"
+              >
+                {isCommiting ? 'Importando...' : 'Importar y Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

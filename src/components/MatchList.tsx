@@ -34,10 +34,12 @@ export function MatchList({
   const getLockStatus = (m: Match) => {
     const kickoff = new Date(m.kickoffTime).getTime();
     const nowSim = new Date(currentSimulatedTime).getTime();
+    const nowReal = Date.now();
+    const effectiveNow = Math.max(nowReal, nowSim);
     const FIVE_MINUTES = 5 * 60 * 1000;
 
-    const isWithinFiveMinutes = (kickoff - nowSim) < FIVE_MINUTES;
-    const isStarted = nowSim >= kickoff;
+    const isWithinFiveMinutes = (kickoff - effectiveNow) < FIVE_MINUTES;
+    const isStarted = effectiveNow >= kickoff;
     const isFinished = m.homeScore !== null && m.awayScore !== null;
 
     if (isFinished) {
@@ -136,7 +138,9 @@ export function MatchList({
   const getRemainingTime = (m: Match) => {
     const kickoff = new Date(m.kickoffTime).getTime();
     const nowSim = new Date(currentSimulatedTime).getTime();
-    const diff = kickoff - nowSim;
+    const nowReal = Date.now();
+    const effectiveNow = Math.max(nowReal, nowSim);
+    const diff = kickoff - effectiveNow;
 
     if (diff <= 0) return 'Jugándose o Finalizado';
     

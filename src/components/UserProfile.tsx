@@ -83,6 +83,36 @@ export function UserProfile({
     window.open(`mailto:edieraristizabal@gmail.com?subject=${subject}&body=${body}`, '_blank');
   };
 
+  const handleSendPredictionsMail = () => {
+    if (!activeParticipant) return;
+    
+    const exportData = {
+      id: activeParticipant.id,
+      name: activeParticipant.name,
+      email: activeParticipant.email,
+      avatarUrl: activeParticipant.avatarUrl,
+      predictions: activeParticipant.predictions,
+      isCompleted: activeParticipant.isCompleted
+    };
+
+    const jsonStr = JSON.stringify(exportData, null, 2);
+    
+    navigator.clipboard.writeText(jsonStr)
+      .then(() => {
+        const predStr = JSON.stringify(activeParticipant.predictions);
+        const base64Str = btoa(unescape(encodeURIComponent(predStr)));
+        const subject = encodeURIComponent(`Pronósticos Polla Geohazard: ${activeParticipant.name}`);
+        const importUrl = `https://edieraristizabal.github.io/Polla_GEOHAZARD/?import_predictions=true&email=${encodeURIComponent(activeParticipant.email)}&data=${encodeURIComponent(base64Str)}`;
+        const body = encodeURIComponent(`Hola Edier, aquí están mis pronósticos de la Polla Geohazard.\n\nPara importarlos y guardarlos automáticamente en la aplicación, haz clic en el siguiente enlace:\n${importUrl}\n\nPor si el enlace anterior no funciona, aquí está el JSON de mi cartilla (que ya se copió a tu portapapeles):\n\n${jsonStr}`);
+        
+        window.open(`mailto:edieraristizabal@gmail.com?subject=${subject}&body=${body}`, '_blank');
+      })
+      .catch((e) => {
+        alert("Error al preparar el envío. Por favor copia los datos manualmente.");
+        console.error(e);
+      });
+  };
+
   // Check how many matches the active user has predicted out of total matches
   const getPredictionStats = () => {
     if (!activeParticipant) return { predicted: 0, total: 0, percent: 0, isDone: false };
@@ -216,6 +246,14 @@ export function UserProfile({
 
           <button
             type="button"
+            onClick={handleSendPredictionsMail}
+            className="w-full mb-2 py-2 bg-[#F59E0B]/20 hover:bg-[#F59E0B]/30 border border-[#F59E0B]/30 rounded-sm text-[10px] text-[#F59E0B] hover:text-white transition-colors font-mono uppercase font-black tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            ✉️ Enviar Pronósticos a Edier (Email)
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               const exportData = {
                 id: activeParticipant.id,
@@ -231,7 +269,7 @@ export function UserProfile({
             }}
             className="w-full mb-2 py-2 bg-brand-primary/20 hover:bg-brand-primary/30 border border-brand-primary/30 rounded-sm text-[10px] text-brand-primary hover:text-white transition-colors font-mono uppercase font-black tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
           >
-            📤 Exportar Mi Cartilla (Copiar)
+            📤 Exportar Mi Cartilla (Copiar JSON)
           </button>
 
           <button
