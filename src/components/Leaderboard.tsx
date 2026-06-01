@@ -184,16 +184,30 @@ export function Leaderboard({ participants, matches, activeParticipantId }: Lead
                               const awayTeam = getTeamInfo(m.awayTeamId);
                               const pred = p.predictions[m.id];
                               
-                              // Check if match actually played out
+                              // Check if match actually played out or is started
                               const played = m.homeScore !== null && m.awayScore !== null;
+                              const kickoff = new Date(m.kickoffTime).getTime();
+                              const isStarted = Date.now() >= kickoff || played;
+
+                              // If it is started/played and pred is empty/incomplete, treat as 0-0
+                              let effPred = pred;
+                              if (isStarted && (!pred || pred.homeScore === null || pred.awayScore === null)) {
+                                effPred = {
+                                  matchId: m.id,
+                                  homeScore: 0,
+                                  awayScore: 0,
+                                  winnerIdToAdvance: m.stage !== 'groups' ? m.homeTeamId : null
+                                };
+                              }
+
                               let borderStyle = 'border-slate-800/60 bg-[#0F1218]/40';
                               let badge = null;
 
-                              if (played && pred) {
+                              if (played && effPred) {
                                 const actH = m.homeScore!;
                                 const actA = m.awayScore!;
-                                const prH = pred.homeScore;
-                                const prA = pred.awayScore;
+                                const prH = effPred.homeScore;
+                                const prA = effPred.awayScore;
 
                                 if (prH !== null && prA !== null) {
                                   const exact = actH === prH && actA === prA;
@@ -228,7 +242,7 @@ export function Leaderboard({ participants, matches, activeParticipantId }: Lead
                                       {homeTeam?.flagEmoji} <span className="font-bold font-mono text-xs">{homeTeam?.code || m.placeholderHome || 'TBD'}</span>
                                     </span>
                                     <span className="bg-slate-900/80 border border-slate-800/80 px-1.5 py-0.5 rounded-none font-mono font-bold text-white text-xs">
-                                      {pred?.homeScore !== null ? pred.homeScore : '-'} : {pred?.awayScore !== null ? pred.awayScore : '-'}
+                                      {effPred?.homeScore !== null && effPred?.homeScore !== undefined ? effPred.homeScore : '-'} : {effPred?.awayScore !== null && effPred?.awayScore !== undefined ? effPred.awayScore : '-'}
                                     </span>
                                     <span className="truncate text-right text-slate-300">
                                       <span className="font-bold font-mono text-xs mr-1">{awayTeam?.code || m.placeholderAway || 'TBD'}</span>

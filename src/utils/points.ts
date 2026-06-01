@@ -189,6 +189,43 @@ export function resolveTournamentPositions(matches: Match[]): Match[] {
 }
 
 /**
+ * Returns the effective prediction for a match.
+ * If the match has started (current time >= kickoff or match has real scores) and prediction is blank,
+ * it returns a default of 0-0 and home team winner (for playoffs).
+ */
+export function getEffectivePrediction(
+  m: Match,
+  pred: MatchPrediction | undefined
+): { homeScore: number | null; awayScore: number | null; winnerIdToAdvance: string | null } {
+  const played = m.homeScore !== null && m.awayScore !== null;
+  const kickoff = new Date(m.kickoffTime).getTime();
+  const isStarted = Date.now() >= kickoff || played;
+
+  if (pred && pred.homeScore !== null && pred.awayScore !== null) {
+    return {
+      homeScore: pred.homeScore,
+      awayScore: pred.awayScore,
+      winnerIdToAdvance: pred.winnerIdToAdvance || null
+    };
+  }
+
+  // If the match has started/has a real score and prediction is blank, treat as 0-0
+  if (isStarted) {
+    return {
+      homeScore: 0,
+      awayScore: 0,
+      winnerIdToAdvance: m.stage !== 'groups' ? m.homeTeamId : null
+    };
+  }
+
+  return {
+    homeScore: pred?.homeScore ?? null,
+    awayScore: pred?.awayScore ?? null,
+    winnerIdToAdvance: pred?.winnerIdToAdvance ?? null
+  };
+}
+
+/**
  * Calculates a participant's points and individual stats by comparing their
  * prediction map against the actual matches.
  */
@@ -207,27 +244,27 @@ export function calculateParticipantPoints(
 
   // Construct a matches list representing the user's customized predictions
   const userMatches: Match[] = actualMatches.map((m) => {
-    const pred = predictions[m.id];
+    const effPred = getEffectivePrediction(m, predictions[m.id]);
     return {
       ...m,
-      homeScore: pred?.homeScore ?? null,
-      awayScore: pred?.awayScore ?? null,
-      winnerIdToAdvance: pred?.winnerIdToAdvance ?? null
+      homeScore: effPred.homeScore,
+      awayScore: effPred.awayScore,
+      winnerIdToAdvance: effPred.winnerIdToAdvance
     };
   });
   const resolvedUser = resolveTournamentPositions(userMatches);
 
   // 1. Calculate Individual Match Prediction points
   actualMatches.forEach((m) => {
-    const pred = predictions[m.id];
-    if (!pred || pred.homeScore === null || pred.awayScore === null || m.homeScore === null || m.awayScore === null) {
+    const effPred = getEffectivePrediction(m, predictions[m.id]);
+    if (effPred.homeScore === null || effPred.awayScore === null || m.homeScore === null || m.awayScore === null) {
       return;
     }
 
     const actH = m.homeScore;
     const actA = m.awayScore;
-    const predH = pred.homeScore;
-    const predA = pred.awayScore;
+    const predH = effPred.homeScore;
+    const predA = effPred.awayScore;
 
     // Check exact score
     const isExact = actH === predH && actA === predA;
@@ -248,7 +285,7 @@ export function calculateParticipantPoints(
 
       // Add 1 additional point if draw predicted in knockout and correct team selected to advance (penalties)
       if (m.stage !== 'groups' && actualWinner === 'D') {
-        const predAdv = pred.winnerIdToAdvance;
+        const predAdv = effPred.winnerIdToAdvance;
         const actAdv = m.winnerIdToAdvance;
         if (predAdv && actAdv && predAdv === actAdv) {
           points += 1;

@@ -1,35 +1,19 @@
 import React from 'react';
-import { ShieldAlert, Users, Award, Calendar, Clock, RotateCcw } from 'lucide-react';
-import { Participant, TournamentConfig } from '../types';
+import { ShieldAlert } from 'lucide-react';
+import { Participant } from '../types';
 import { AVATAR_OPTIONS } from '../data/avatars';
 
 interface HeaderProps {
-  config: TournamentConfig;
-  onResetTime: () => void;
   activeParticipant: Participant | null;
   participants: Participant[];
   onSelectParticipant: (id: string | null) => void;
 }
 
 export function Header({
-  config,
-  onResetTime,
   activeParticipant,
   participants,
   onSelectParticipant
 }: HeaderProps) {
-  const formatTime = (isoString: string) => {
-    const d = new Date(isoString);
-    return d.toLocaleString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'UTC'
-    }) + ' UTC';
-  };
-
   const getAvatarEmoji = (avatarId: string) => {
     const found = AVATAR_OPTIONS.find((a) => a.id === avatarId);
     return found ? found.emoji : '👤';
@@ -55,31 +39,6 @@ export function Header({
             <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500 font-mono mt-1">
               Polla Deportiva Mundialista
             </p>
-          </div>
-        </div>
-
-        {/* Dynamic Simulated Clock Info */}
-        <div className="flex flex-wrap items-center gap-2 bg-bg-darkest border border-slate-800 rounded-sm p-3 max-w-md">
-          <div className="text-brand-primary flex items-center gap-1">
-            <Clock size={14} className="animate-spin-slow shrink-0" />
-            <span className="font-mono text-[10px] font-bold text-slate-400 tracking-wider">FECHA SIMULADA:</span>
-          </div>
-          <span className="font-mono text-xs text-white font-bold">
-            {formatTime(config.currentSimulatedTime)}
-          </span>
-          <button
-            onClick={onResetTime}
-            title="Restablecer a la fecha actual"
-            className="ml-2 rounded-sm bg-slate-900 p-1 hover:bg-brand-primary hover:text-black text-slate-400 transition duration-150 cursor-pointer"
-          >
-            <RotateCcw size={10} />
-          </button>
-          
-          <div className="w-full mt-1.5 pt-1.5 border-t border-slate-800/40 flex justify-between text-[10px] text-slate-500 font-mono">
-            <span>Mundial: 11 Jun 2026</span>
-            <span className={config.isWorldCupStarted ? "text-rose-500 font-semibold" : "text-brand-primary font-semibold"}>
-              {config.isWorldCupStarted ? "● EN JUEGO" : "● PREPARACIÓN"}
-            </span>
           </div>
         </div>
 

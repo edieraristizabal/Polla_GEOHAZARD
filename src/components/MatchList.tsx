@@ -7,8 +7,6 @@ interface MatchListProps {
   matches: Match[];
   predictions: Record<string, MatchPrediction>;
   activeParticipant: Participant | null;
-  currentSimulatedTime: string;
-  isWorldCupStarted: boolean;
   onSavePrediction: (matchId: string, homeScore: number, awayScore: number, winnerIdToAdvance?: string | null) => void;
   onRandomizeRemaining: () => void;
 }
@@ -17,13 +15,14 @@ export function MatchList({
   matches,
   predictions,
   activeParticipant,
-  currentSimulatedTime,
-  isWorldCupStarted,
   onSavePrediction,
   onRandomizeRemaining
 }: MatchListProps) {
   const [activeTab, setActiveTab] = useState<'groups' | 'knockouts'>('groups');
   const [editingScores, setEditingScores] = useState<Record<string, { home: string; away: string; winnerIdToAdvance: string | null }>>({});
+
+  const WC_START_TIME = '2026-06-11T15:00:00Z';
+  const isWorldCupStarted = Date.now() >= new Date(WC_START_TIME).getTime();
 
   const getTeamInfo = (teamId: string | null): Team | null => {
     if (!teamId) return null;
@@ -33,13 +32,11 @@ export function MatchList({
   // Check if a match is locked according to the strict 5-minute pre-kickoff rules
   const getLockStatus = (m: Match) => {
     const kickoff = new Date(m.kickoffTime).getTime();
-    const nowSim = new Date(currentSimulatedTime).getTime();
     const nowReal = Date.now();
-    const effectiveNow = Math.max(nowReal, nowSim);
     const FIVE_MINUTES = 5 * 60 * 1000;
 
-    const isWithinFiveMinutes = (kickoff - effectiveNow) < FIVE_MINUTES;
-    const isStarted = effectiveNow >= kickoff;
+    const isWithinFiveMinutes = (kickoff - nowReal) < FIVE_MINUTES;
+    const isStarted = nowReal >= kickoff;
     const isFinished = m.homeScore !== null && m.awayScore !== null;
 
     if (isFinished) {
@@ -137,10 +134,8 @@ export function MatchList({
 
   const getRemainingTime = (m: Match) => {
     const kickoff = new Date(m.kickoffTime).getTime();
-    const nowSim = new Date(currentSimulatedTime).getTime();
     const nowReal = Date.now();
-    const effectiveNow = Math.max(nowReal, nowSim);
-    const diff = kickoff - effectiveNow;
+    const diff = kickoff - nowReal;
 
     if (diff <= 0) return 'Jugándose o Finalizado';
     

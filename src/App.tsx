@@ -33,7 +33,7 @@ export default function App() {
   });
 
   const [selectedGroupStandings, setSelectedGroupStandings] = useState<string>('A');
-  const [activeMainTab, setActiveMainTab] = useState<'matches' | 'standings' | 'rules'>('matches');
+  const [activeMainTab, setActiveMainTab] = useState<'matches' | 'standings' | 'rules' | 'admin'>('matches');
 
   const [githubPat, setGithubPat] = useState<string>(() => localStorage.getItem('geohazard_github_pat') || '');
   const [pendingApproval, setPendingApproval] = useState<{ name: string; email: string; avatar: string } | null>(null);
@@ -373,69 +373,7 @@ export default function App() {
 
   // --- ACTIONS ---
 
-  // Update Config Date and lock status
-  const handleUpdateConfig = (updated: Partial<TournamentConfig>) => {
-    const nextConfig = {
-      ...config,
-      ...updated
-    };
-    setConfig(nextConfig);
-    localStorage.setItem('geohazard_config', JSON.stringify(nextConfig));
 
-    // Evaluate temporal rule immediately!
-    const simTime = nextConfig.currentSimulatedTime;
-    const isStarted = new Date(simTime).getTime() >= new Date(WC_START_TIME).getTime();
-
-    if (isStarted) {
-      let triggeredAutofill = false;
-      const nextParticipants = participants.map((p) => {
-        // Find if they have any missing or blank predictions
-        let incomplete = false;
-        matches.forEach((m) => {
-          const pred = p.predictions[m.id];
-          if (!pred || pred.homeScore === null || pred.awayScore === null) {
-            incomplete = true;
-          }
-        });
-
-        if (incomplete) {
-          triggeredAutofill = true;
-          const userPred = { ...p.predictions };
-          const rand = generateRandomPredictions(matches);
-
-          matches.forEach((m) => {
-            const pred = userPred[m.id];
-            if (!pred || pred.homeScore === null || pred.awayScore === null) {
-              userPred[m.id] = rand[m.id];
-            }
-          });
-
-          return {
-            ...p,
-            predictions: userPred,
-            isCompleted: true,
-            hasAutoFilled: true
-          };
-        }
-        return p;
-      });
-
-      if (triggeredAutofill) {
-        const { resolvedMatches, updatedParticipants } = runRecalculation(matches, nextParticipants);
-        setParticipants(updatedParticipants);
-        setMatches(resolvedMatches);
-        localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
-        localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
-      }
-    }
-  };
-
-  const handleResetTime = () => {
-    handleUpdateConfig({
-      currentSimulatedTime: INITIAL_SIM_TIME,
-      isWorldCupStarted: false
-    });
-  };
 
   const handleSelectParticipant = (id: string | null) => {
     if (id === 'edieraristizabal@gmail.com') {
@@ -450,6 +388,9 @@ export default function App() {
       localStorage.setItem('geohazard_active_id', id);
     } else {
       localStorage.removeItem('geohazard_active_id');
+    }
+    if (id !== 'edieraristizabal@gmail.com' && activeMainTab === 'admin') {
+      setActiveMainTab('matches');
     }
   };
 
@@ -476,14 +417,6 @@ export default function App() {
 
     const nextParticipants = [...participants, newParticipant];
     
-    // Evaluate if world cup is already started and assign random predictions immediately!
-    const isStarted = new Date(config.currentSimulatedTime).getTime() >= new Date(WC_START_TIME).getTime();
-    if (isStarted) {
-      newParticipant.predictions = generateRandomPredictions(matches);
-      newParticipant.isCompleted = true;
-      newParticipant.hasAutoFilled = true;
-    }
-
     const { resolvedMatches, updatedParticipants } = runRecalculation(matches, nextParticipants);
 
     setParticipants(updatedParticipants);
@@ -513,15 +446,13 @@ export default function App() {
   ) => {
     if (!activeParticipantId) return;
 
-    // Strict 5-minute pre-kickoff lockout verification (bypassed for Admin)
+    // Strict 5-minute pre-kickoff lockout verification
     const m = matches.find((x) => x.id === matchId);
     if (!m) return;
 
     const kickoff = new Date(m.kickoffTime).getTime();
-    const nowSim = new Date(config.currentSimulatedTime).getTime();
     const FIVE_MINUTES = 5 * 60 * 1000;
-    const effectiveNow = Math.max(Date.now(), nowSim);
-    if (kickoff - effectiveNow < FIVE_MINUTES) {
+    if (kickoff - Date.now() < FIVE_MINUTES) {
       alert("⚠️ REGLAMENTO DE REGISTRO LOCKOUT: Los pronósticos deben ingresarse hasta un máximo de 5 minutos antes del partido oficial.");
       return;
     }
@@ -821,15 +752,13 @@ export default function App() {
       let updatedCount = 0;
       let blockedCount = 0;
       
-      const nowSim = new Date(config.currentSimulatedTime).getTime();
-      const effectiveNow = Math.max(Date.now(), nowSim);
       const FIVE_MINUTES = 5 * 60 * 1000;
       
       Object.keys(decodedPredictions).forEach((matchId) => {
         const m = matches.find(x => x.id === matchId);
         if (m) {
           const kickoff = new Date(m.kickoffTime).getTime();
-          if (kickoff - effectiveNow < FIVE_MINUTES) {
+          if (kickoff - Date.now() < FIVE_MINUTES) {
             blockedCount++;
           } else {
             nextPredictions[matchId] = decodedPredictions[matchId];
@@ -915,8 +844,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-bg-darkest text-slate-100 flex flex-col">
       <Header
-        config={config}
-        onResetTime={handleResetTime}
         activeParticipant={activeUser}
         participants={participants}
         onSelectParticipant={handleSelectParticipant}
@@ -966,6 +893,18 @@ export default function App() {
             >
               📜 Reglamento
             </button>
+            {activeParticipantId === 'edieraristizabal@gmail.com' && (
+              <button
+                onClick={() => setActiveMainTab('admin')}
+                className={`flex-1 sm:flex-initial px-5 py-2.5 text-[11px] uppercase font-black font-mono tracking-wider transition cursor-pointer select-none ${
+                  activeMainTab === 'admin'
+                    ? 'bg-brand-primary text-black'
+                    : 'text-slate-400 hover:text-white hover:bg-slate-900/50'
+                }`}
+              >
+                🛠️ Administrador
+              </button>
+            )}
           </div>
 
           {/* Match selection card list */}
@@ -974,8 +913,6 @@ export default function App() {
               matches={matches}
               predictions={predictionsActive}
               activeParticipant={activeUser}
-              currentSimulatedTime={config.currentSimulatedTime}
-              isWorldCupStarted={config.isWorldCupStarted}
               onSavePrediction={handleSavePrediction}
               onRandomizeRemaining={handleRandomizeRemaining}
             />
@@ -1017,23 +954,21 @@ export default function App() {
                 <li className="flex gap-2 border-t border-slate-900 pt-2.5">
                   <span className="text-brand-amber font-bold shrink-0">▲</span>
                   <span>
-                    <strong>Cierre de Partido:</strong> Autocierre <strong>5 minutos antes</strong>.
+                    <strong>Cierre de Partido:</strong> Autocierre <strong>5 minutos antes</strong> del pitazo inicial.
                   </span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-brand-amber font-bold shrink-0">▲</span>
                   <span>
-                    <strong>Cartilla Completa:</strong> Pendientes se auto-completan con resultados aleatorios al inicio del mundial.
+                    <strong>Sin Pronóstico:</strong> Si no ingresas un resultado, se tomará como un <strong>0-0</strong> al iniciar el partido (clasificando al primer equipo en eliminación directa).
                   </span>
                 </li>
               </ul>
             </div>
           )}
 
-          {/* Dedicated Admin simulator */}
-          {activeParticipantId === 'edieraristizabal@gmail.com' && (
+          {activeMainTab === 'admin' && activeParticipantId === 'edieraristizabal@gmail.com' && (
             <MatchAdmin
-              config={config}
               matches={matches}
               participants={participants}
               githubPat={githubPat}
@@ -1044,7 +979,6 @@ export default function App() {
               }}
               onApproveParticipantDirectly={handleApproveParticipantDirectly}
               onRejectParticipantDirectly={handleRejectParticipantDirectly}
-              onUpdateConfig={handleUpdateConfig}
               onUpdateMatchScore={handleUpdateMatchScore}
             />
           )}

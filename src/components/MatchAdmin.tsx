@@ -1,30 +1,26 @@
 import React, { useState } from 'react';
-import { Shield, Clock, Sliders, Trash2, Key, CheckCircle, XCircle, UserCheck, UserX } from 'lucide-react';
-import { Match, Team, TournamentConfig } from '../types';
+import { Shield, Sliders, Trash2, Key, CheckCircle, XCircle, UserCheck, UserX } from 'lucide-react';
+import { Match, Team } from '../types';
 import { TEAMS } from '../data/teams';
 import { Participant } from '../types';
 
 interface MatchAdminProps {
-  config: TournamentConfig;
   matches: Match[];
   participants: Participant[];
   githubPat: string;
   onUpdateGithubPat: (token: string) => void;
   onApproveParticipantDirectly: (email: string) => void;
   onRejectParticipantDirectly: (email: string) => void;
-  onUpdateConfig: (updated: Partial<TournamentConfig>) => void;
   onUpdateMatchScore: (matchId: string, homeScore: number, awayScore: number, winnerIdToAdvance?: string | null) => void;
 }
 
 export function MatchAdmin({
-  config,
   matches,
   participants,
   githubPat,
   onUpdateGithubPat,
   onApproveParticipantDirectly,
   onRejectParticipantDirectly,
-  onUpdateConfig,
   onUpdateMatchScore
 }: MatchAdminProps) {
   const [selectedMatchId, setSelectedMatchId] = useState<string>('');
@@ -33,21 +29,9 @@ export function MatchAdmin({
   const [winnerAdv, setWinnerAdv] = useState<string>('');
   const [patInput, setPatInput] = useState<string>(githubPat);
 
-  const [simDate, setSimDate] = useState<string>('2026-06-11');
-  const [simHour, setSimHour] = useState<string>('12:00');
-
   const getTeamInfo = (teamId: string | null): Team | null => {
     if (!teamId) return null;
     return TEAMS.find((t) => t.id === teamId) || null;
-  };
-
-  const handleTimeChange = (e: React.FormEvent) => {
-    e.preventDefault();
-    const cleanDate = `${simDate}T${simHour}:00Z`;
-    onUpdateConfig({
-      currentSimulatedTime: cleanDate,
-      isWorldCupStarted: new Date(cleanDate).getTime() >= new Date(config.startedAt).getTime()
-    });
   };
 
   const selectedMatch = matches.find((m) => m.id === selectedMatchId);
@@ -232,89 +216,6 @@ export function MatchAdmin({
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Time Simulator (Manual override) */}
-        <div className="bg-[#0A0C10] p-4 rounded-sm border border-slate-850">
-          <h4 className="text-[10px] uppercase tracking-widest text-[#F59E0B] font-mono font-black mb-3 flex items-center gap-1.5 pb-2 border-b border-slate-950">
-            <Clock size={11} />
-            Línea del Tiempo (Simulador)
-          </h4>
-
-          <form onSubmit={handleTimeChange} className="space-y-3">
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label htmlFor="sim-date" className="block text-[9px] uppercase font-mono font-bold tracking-wider text-slate-500 mb-1 font-mono">Fecha</label>
-                <input
-                  id="sim-date"
-                  type="date"
-                  value={simDate}
-                  onChange={(e) => setSimDate(e.target.value)}
-                  className="w-full bg-black border border-slate-800 rounded-sm px-2 py-1 text-xs text-slate-200 outline-none focus:border-brand-amber font-mono"
-                />
-              </div>
-              <div>
-                <label htmlFor="sim-hour" className="block text-[9px] uppercase font-mono font-bold tracking-wider text-slate-500 mb-1 font-mono">Hora (UTC)</label>
-                <input
-                  id="sim-hour"
-                  type="time"
-                  value={simHour}
-                  onChange={(e) => setSimHour(e.target.value)}
-                  className="w-full bg-black border border-slate-800 rounded-sm px-2 py-1 text-xs text-slate-200 outline-none focus:border-brand-amber font-mono"
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              className="w-full text-[10px] font-mono uppercase tracking-widest py-2 px-3 bg-brand-amber hover:bg-amber-600 text-black font-black rounded-sm transition duration-150 cursor-pointer shadow"
-            >
-              Aplicar Nueva Fecha
-            </button>
-          </form>
-
-          {/* Quick Dates shortcuts */}
-          <div className="mt-4 flex flex-col gap-1.5 pt-3.5 border-t border-slate-950">
-            <button
-              onClick={() => {
-                setSimDate('2026-06-11');
-                setSimHour('17:50');
-                onUpdateConfig({
-                  currentSimulatedTime: '2026-06-11T17:50:00Z',
-                  isWorldCupStarted: false
-                });
-              }}
-              className="text-[9px] text-left px-2.5 py-1.5 bg-black hover:bg-slate-900 border border-slate-850 rounded-sm font-mono text-slate-400 font-bold uppercase tracking-wide hover:text-white transition-colors cursor-pointer"
-            >
-              📅 10 mins antes del inaugural
-            </button>
-            <button
-              onClick={() => {
-                setSimDate('2026-06-15');
-                setSimHour('12:00');
-                onUpdateConfig({
-                  currentSimulatedTime: '2026-06-15T12:00:00Z',
-                  isWorldCupStarted: true
-                });
-              }}
-              className="text-[9px] text-left px-2.5 py-1.5 bg-black hover:bg-slate-900 border border-slate-850 rounded-sm font-mono text-slate-400 font-bold uppercase tracking-wide hover:text-white transition-colors cursor-pointer"
-            >
-              📅 Mitad de Grupos (15 de Junio)
-            </button>
-            <button
-              onClick={() => {
-                setSimDate('2026-06-25');
-                setSimHour('12:00');
-                onUpdateConfig({
-                  currentSimulatedTime: '2026-06-25T12:00:00Z',
-                  isWorldCupStarted: true
-                });
-              }}
-              className="text-[9px] text-left px-2.5 py-1.5 bg-black hover:bg-slate-900 border border-slate-850 rounded-sm font-mono text-slate-400 font-bold uppercase tracking-wide hover:text-white transition-colors cursor-pointer"
-            >
-              📅 Inicio Eliminación Directa
-            </button>
-          </div>
-        </div>
-
         {/* Record match score manually if needed */}
         <div className="bg-[#0A0C10] p-4 rounded-sm border border-slate-850">
           <h4 className="text-[10px] uppercase tracking-widest text-[#F59E0B] font-mono font-black mb-3 flex items-center gap-1.5 pb-2 border-b border-slate-955">
@@ -409,18 +310,17 @@ export function MatchAdmin({
             )}
           </form>
         </div>
-      </div>
 
-      {/* Database backup section */}
-      <div className="bg-[#0A0C10] p-4 rounded-sm border border-slate-850">
-        <h4 className="text-[10px] uppercase tracking-widest text-[#F59E0B] font-mono font-black mb-3 flex items-center justify-between pb-2 border-b border-slate-950">
-          <span>📋 Copiar Base de Datos de Participantes</span>
-        </h4>
-
-        <div className="space-y-3">
-          <p className="text-[10px] text-slate-400 leading-relaxed font-sans font-normal">
-            Copia el JSON consolidado de participantes y sus pronósticos actuales. Esto sirve como respaldo o para actualizar directamente el archivo estático local `src/data/participants.json` de tu código.
-          </p>
+        {/* Database backup section */}
+        <div className="bg-[#0A0C10] p-4 rounded-sm border border-slate-850 flex flex-col justify-between">
+          <div>
+            <h4 className="text-[10px] uppercase tracking-widest text-[#F59E0B] font-mono font-black mb-3 flex items-center justify-between pb-2 border-b border-slate-955">
+              <span>📋 Copiar Base de Datos de Participantes</span>
+            </h4>
+            <p className="text-[10px] text-slate-400 leading-relaxed font-sans font-normal">
+              Copia el JSON consolidado de participantes y sus pronósticos actuales. Esto sirve como respaldo o para actualizar directamente el archivo estático local `src/data/participants.json` de tu código.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => {
@@ -428,7 +328,7 @@ export function MatchAdmin({
                 .then(() => alert("📋 Base de datos JSON copiada al portapapeles con éxito."))
                 .catch(() => alert("Error al copiar al portapapeles."));
             }}
-            className="w-full py-2 bg-brand-amber/20 hover:bg-brand-amber/30 border border-brand-amber/30 text-brand-amber hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition text-center cursor-pointer font-bold"
+            className="w-full mt-4 py-2 bg-brand-amber/20 hover:bg-brand-amber/30 border border-brand-amber/30 text-brand-amber hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition text-center cursor-pointer font-bold"
           >
             📋 Copiar JSON de Participantes
           </button>
