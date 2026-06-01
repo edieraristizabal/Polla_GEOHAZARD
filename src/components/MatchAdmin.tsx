@@ -3,29 +3,38 @@ import { Shield, Clock, Calendar, RefreshCw, Star, Trash2, Sliders, PlayCircle }
 import { Match, Team, TournamentConfig } from '../types';
 import { TEAMS } from '../data/teams';
 
+import { Participant } from '../types';
+
 interface MatchAdminProps {
   config: TournamentConfig;
   matches: Match[];
+  participants: Participant[];
   onUpdateConfig: (updated: Partial<TournamentConfig>) => void;
   onUpdateMatchScore: (matchId: string, homeScore: number, awayScore: number, winnerIdToAdvance?: string | null) => void;
   onSimulateGroups: () => void;
   onSimulateFullTournament: () => void;
   onResetTournament: () => void;
+  onImportParticipant: (jsonStr: string) => boolean;
+  onClearAllParticipants: () => void;
 }
 
 export function MatchAdmin({
   config,
   matches,
+  participants,
   onUpdateConfig,
   onUpdateMatchScore,
   onSimulateGroups,
   onSimulateFullTournament,
-  onResetTournament
+  onResetTournament,
+  onImportParticipant,
+  onClearAllParticipants
 }: MatchAdminProps) {
   const [selectedMatchId, setSelectedMatchId] = useState<string>('');
   const [homeScoreInput, setHomeScoreInput] = useState<string>('');
   const [awayScoreInput, setAwayScoreInput] = useState<string>('');
   const [winnerAdv, setWinnerAdv] = useState<string>('');
+  const [importJson, setImportJson] = useState<string>('');
 
   const [simDate, setSimDate] = useState<string>('2026-06-11');
   const [simHour, setSimHour] = useState<string>('12:00');
@@ -266,6 +275,82 @@ export function MatchAdmin({
               </div>
             )}
           </form>
+        </div>
+      </div>
+
+      {/* Participant Management (Import/Export) */}
+      <div className="bg-[#0A0C10] p-4 rounded-sm border border-slate-850 mb-5">
+        <h4 className="text-[10px] uppercase tracking-widest text-[#F59E0B] font-mono font-black mb-3 flex items-center justify-between pb-2 border-b border-slate-950">
+          <span>👥 Gestión de Inscripciones (Base de Datos)</span>
+          <span className="text-[9px] text-slate-500 lowercase font-normal italic">Consolidación de pollas</span>
+        </h4>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Import Participant JSON */}
+          <div className="space-y-2">
+            <label htmlFor="import-json" className="block text-[9px] uppercase font-mono font-bold tracking-wider text-slate-500">
+              📥 Importar Cartilla (Pegar JSON de jugador)
+            </label>
+            <textarea
+              id="import-json"
+              rows={3}
+              value={importJson}
+              onChange={(e) => setImportJson(e.target.value)}
+              placeholder='Pegar aquí el JSON copiado por el jugador (ej: { "name": "...", "predictions": {...} })'
+              className="w-full bg-black border border-slate-800 rounded-sm px-2.5 py-1.5 text-[10px] font-mono text-slate-300 outline-none focus:border-brand-amber resize-none"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                if (!importJson.trim()) return;
+                const success = onImportParticipant(importJson);
+                if (success) {
+                  alert("✅ Participante importado/actualizado con éxito.");
+                  setImportJson('');
+                } else {
+                  alert("❌ Formato JSON inválido. Por favor verifica que copiaste el código completo.");
+                }
+              }}
+              className="w-full py-1.5 bg-[#10B981]/20 hover:bg-[#10B981]/30 border border-[#10B981]/30 text-[#10B981] hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition duration-150 cursor-pointer"
+            >
+              Cargar y Registrar Participante
+            </button>
+          </div>
+
+          {/* Export consolidated database */}
+          <div className="flex flex-col justify-between space-y-2.5">
+            <div className="text-[10px] text-slate-400 font-sans leading-relaxed">
+              <p><strong>¿Cómo consolidar la polla general?</strong></p>
+              <ol className="list-decimal pl-4 space-y-1 mt-1 text-[9px] text-slate-500 font-mono">
+                <li>Los jugadores entran a la app, se inscriben y llenan sus pronósticos.</li>
+                <li>Copian sus datos usando el botón <strong>"Exportar Mi Cartilla"</strong> y te envían el texto.</li>
+                <li>Pega cada texto a la izquierda y presiona <strong>"Cargar y Registrar"</strong>.</li>
+                <li>Presiona el botón de abajo para copiar la base de datos oficial y pégala en <code>src/data/participants.json</code> de tu código.</li>
+              </ol>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(JSON.stringify(participants, null, 2))
+                    .then(() => alert("📋 Base de datos consolidada copiada al portapapeles. Pégala en src/data/participants.json"))
+                    .catch(() => alert("Error al copiar al portapapeles."));
+                }}
+                className="flex-1 py-2 bg-brand-amber/20 hover:bg-brand-amber/30 border border-brand-amber/30 text-brand-amber hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition duration-150 cursor-pointer text-center"
+              >
+                📋 Copiar DB para Repositorio
+              </button>
+
+              <button
+                type="button"
+                onClick={onClearAllParticipants}
+                className="py-2 px-3 bg-red-950/20 hover:bg-red-950/30 border border-red-900/10 text-rose-400 hover:text-white font-mono text-[9px] font-black uppercase tracking-wider rounded-sm transition duration-150 cursor-pointer text-center"
+              >
+                🗑️ Borrar Locales
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 

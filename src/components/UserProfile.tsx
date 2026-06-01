@@ -164,6 +164,26 @@ export function UserProfile({
           </div>
 
           <button
+            type="button"
+            onClick={() => {
+              const exportData = {
+                id: activeParticipant.id,
+                name: activeParticipant.name,
+                email: activeParticipant.email,
+                avatarUrl: activeParticipant.avatarUrl,
+                predictions: activeParticipant.predictions,
+                isCompleted: activeParticipant.isCompleted
+              };
+              navigator.clipboard.writeText(JSON.stringify(exportData, null, 2))
+                .then(() => alert("📋 ¡Cartilla copiada al portapapeles! Envíasela al administrador."))
+                .catch(() => alert("Error al copiar. Por favor copia los datos manualmente."));
+            }}
+            className="w-full mb-2 py-2 bg-brand-primary/20 hover:bg-brand-primary/30 border border-brand-primary/30 rounded-sm text-[10px] text-brand-primary hover:text-white transition-colors font-mono uppercase font-black tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            📤 Exportar Mi Cartilla (Copiar)
+          </button>
+
+          <button
             onClick={() => onSelectParticipant(null)}
             className="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-850 rounded-sm text-[10px] text-slate-400 hover:text-white transition-colors font-mono uppercase font-black tracking-wider cursor-pointer"
           >

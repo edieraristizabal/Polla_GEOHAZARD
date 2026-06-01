@@ -58,18 +58,25 @@ export default function App() {
       }
     }
 
-    // 3. Load participants
+    // 3. Load participants (Merge official repository list with local overrides)
+    const officialParticipants = getPreseededParticipants(loadedMatches);
     const savedPart = localStorage.getItem('geohazard_participants');
-    let loadedParticipants: Participant[] = [];
+    let localParticipants: Participant[] = [];
     if (savedPart) {
       try {
-        loadedParticipants = JSON.parse(savedPart);
+        localParticipants = JSON.parse(savedPart);
       } catch (e) {
-        console.error('Error loading participants', e);
+        console.error('Error loading local participants', e);
       }
-    } else {
-      loadedParticipants = getPreseededParticipants(loadedMatches);
     }
+
+    // Merge: official repository participants always take precedence, and local-only ones are appended
+    const loadedParticipants = [...officialParticipants];
+    localParticipants.forEach((lp) => {
+      if (!loadedParticipants.some((op) => op.id === lp.id)) {
+        loadedParticipants.push(lp);
+      }
+    });
 
     // Run propagation and points matching once to make sure lists are perfectly synced
     // Before loading to state:
@@ -86,8 +93,10 @@ export default function App() {
     if (savedActiveId && updatedParticipants.some(p => p.id === savedActiveId)) {
       setActiveParticipantId(savedActiveId);
     } else if (updatedParticipants.length > 0) {
-      // Default to host
+      // Default to first participant if active participant not set
       setActiveParticipantId(updatedParticipants[0].id);
+    } else {
+      setActiveParticipantId(null);
     }
   }, []);
 
@@ -585,6 +594,52 @@ export default function App() {
     }));
   };
 
+  // ADMIN: Import player cartilla from JSON
+  const handleImportParticipant = (jsonStr: string): boolean => {
+    try {
+      const data = JSON.parse(jsonStr);
+      if (!data.name || !data.email || !data.predictions) {
+        return false;
+      }
+      const cleanEmail = data.email.trim().toLowerCase();
+      const importedParticipant: Participant = {
+        id: cleanEmail,
+        name: data.name.trim(),
+        email: cleanEmail,
+        avatarUrl: data.avatarUrl || 'av_1',
+        predictions: data.predictions,
+        points: 0,
+        stats: { correctWinner: 0, correctExactScore: 0, correctQualifiedTeams: 0 },
+        hasAutoFilled: data.hasAutoFilled || false,
+        isCompleted: data.isCompleted || false
+      };
+
+      const filtered = participants.filter((p) => p.email.toLowerCase() !== cleanEmail);
+      const nextParticipants = [...filtered, importedParticipant];
+
+      const { resolvedMatches, updatedParticipants } = runRecalculation(matches, nextParticipants);
+
+      setParticipants(updatedParticipants);
+      setMatches(resolvedMatches);
+      localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
+      localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
+      return true;
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
+
+  // ADMIN: Clear all local participants
+  const handleClearAllParticipants = () => {
+    if (window.confirm("¿Estás seguro de borrar todos los participantes locales del navegador?")) {
+      setParticipants([]);
+      setActiveParticipantId(null);
+      localStorage.removeItem('geohazard_participants');
+      localStorage.removeItem('geohazard_active_id');
+    }
+  };
+
   // Active user's predictions list
   const activeUser = participants.find((p) => p.id === activeParticipantId) || null;
   const predictionsActive = activeUser ? activeUser.predictions : {};
@@ -629,11 +684,14 @@ export default function App() {
           <MatchAdmin
             config={config}
             matches={matches}
+            participants={participants}
             onUpdateConfig={handleUpdateConfig}
             onUpdateMatchScore={handleUpdateMatchScore}
             onSimulateGroups={handleSimulateGroups}
             onSimulateFullTournament={handleSimulateFullTournament}
             onResetTournament={handleResetTournament}
+            onImportParticipant={handleImportParticipant}
+            onClearAllParticipants={handleClearAllParticipants}
           />
         </section>
 
