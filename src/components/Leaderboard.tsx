@@ -14,7 +14,10 @@ export function Leaderboard({ participants, matches, activeParticipantId }: Lead
   const [expandedParticipantId, setExpandedParticipantId] = useState<string | null>(null);
 
   // Sort participants by points descending, then exact scores descending, then correct winner descending, then alphabetical
-  const sortedParticipants = [...participants].sort((a, b) => {
+  // Filter out pending participants so they don't show up in the leaderboard
+  const visibleParticipants = participants.filter((p) => p.status !== 'pending');
+
+  const sortedParticipants = [...visibleParticipants].sort((a, b) => {
     if (b.points !== a.points) return b.points - a.points;
     if (b.stats.correctExactScore !== a.stats.correctExactScore) {
       return b.stats.correctExactScore - a.stats.correctExactScore;
@@ -42,7 +45,7 @@ export function Leaderboard({ participants, matches, activeParticipantId }: Lead
           Tabla de Posiciones General
         </h2>
         <span className="text-[10px] text-brand-primary bg-brand-primary/10 border border-brand-primary/20 px-3 py-1 rounded-sm font-mono uppercase font-bold tracking-wider">
-          {participants.length} Competidores
+          {visibleParticipants.length} Competidores
         </span>
       </div>
 

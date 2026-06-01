@@ -12,6 +12,7 @@ export interface Participant {
   };
   hasAutoFilled: boolean;         // true if assigned randomly before tournament start
   isCompleted: boolean;           // true if has full checklist of predictions defined
+  status?: 'approved' | 'pending';
 }
 
 export interface Team {

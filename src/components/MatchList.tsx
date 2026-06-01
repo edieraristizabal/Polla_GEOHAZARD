@@ -187,7 +187,7 @@ export function MatchList({
         </div>
 
         {/* Global Action */}
-        {activeParticipant && !isWorldCupStarted && (
+        {activeParticipant && !isWorldCupStarted && activeParticipant.status !== 'pending' && (
           <button
             onClick={onRandomizeRemaining}
             className="flex items-center gap-1.5 py-2 px-4.5 text-[10px] font-black font-mono text-black bg-brand-cyan hover:bg-opacity-95 rounded-sm transition duration-150 uppercase tracking-wider cursor-pointer shadow-md shadow-brand-cyan/10"
@@ -214,7 +214,9 @@ export function MatchList({
               <span className="text-brand-primary font-black">{activeParticipant.name}</span>
             </div>
             <div>
-              {isWorldCupStarted ? (
+              {activeParticipant.status === 'pending' ? (
+                <span className="text-amber-500 font-bold bg-amber-950/20 border border-amber-900/20 px-2 py-0.5 rounded-sm">⏳ PENDIENTE DE APROBACIÓN</span>
+              ) : isWorldCupStarted ? (
                 <span className="text-rose-500 font-bold bg-rose-950/20 border border-rose-900/20 px-2 py-0.5 rounded-sm">⚠️ MUNDIAL EN JUEGO</span>
               ) : (
                 <span className="text-brand-primary font-bold bg-brand-primary/10 border border-brand-primary/20 px-2 py-0.5 rounded-sm">✅ Cartilla Abierta</span>
@@ -222,21 +224,31 @@ export function MatchList({
             </div>
           </div>
 
+          {activeParticipant.status === 'pending' && (
+            <div className="mb-4 p-4 bg-amber-950/20 border border-amber-900/50 text-amber-300 font-mono text-xs rounded-sm">
+              <span className="font-bold uppercase block mb-1">Inscripción Pendiente</span>
+              Tu inscripción está siendo validada por el administrador (Edier Aristizabal).
+              Para acelerar el proceso, asegúrate de haber enviado el correo de solicitud. 
+              Una vez aprobado, se habilitará la edición de tus predicciones.
+            </div>
+          )}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredMatches.map((m) => {
               const homeTeam = getTeamInfo(m.homeTeamId);
               const awayTeam = getTeamInfo(m.awayTeamId);
               const pred = predictions[m.id];
               const lock = getLockStatus(m);
+              const isLocked = lock.locked || activeParticipant?.status === 'pending';
 
               const homeInputVal = editingScores[m.id]?.home ?? pred?.homeScore?.toString() ?? '';
               const awayInputVal = editingScores[m.id]?.away ?? pred?.awayScore?.toString() ?? '';
               const winnerAdv = editingScores[m.id]?.winnerIdToAdvance ?? pred?.winnerIdToAdvance ?? null;
 
-              const isSavingDisabled = homeInputVal === '' || awayInputVal === '' || lock.locked;
+              const isSavingDisabled = homeInputVal === '' || awayInputVal === '' || isLocked;
               
               // Highlight if predicted value and real value align
-              const scoreEntered = pred?.homeScore !== null && pred?.awayScore !== null;
+              const scoreEntered = pred !== undefined && pred.homeScore !== null && pred.homeScore !== undefined && pred.awayScore !== null && pred.awayScore !== undefined;
               const hasActualResult = m.homeScore !== null && m.awayScore !== null;
 
               return (
@@ -257,9 +269,9 @@ export function MatchList({
                       {formatKickoff(m.kickoffTime)}
                     </span>
                     <span className={`px-2 py-0.5 rounded-sm text-[9px] uppercase font-bold tracking-wider ${
-                      lock.locked ? 'bg-rose-950/20 text-rose-400 border border-rose-900/10' : 'bg-[#0A0C10] text-emerald-400 border border-emerald-950'
+                      isLocked ? 'bg-rose-950/20 text-rose-400 border border-rose-900/10' : 'bg-[#0A0C10] text-emerald-400 border border-emerald-950'
                     }`}>
-                      {lock.locked ? lock.reason : getRemainingTime(m)}
+                      {isLocked ? (activeParticipant?.status === 'pending' ? 'Pendiente aprobación' : lock.reason) : getRemainingTime(m)}
                     </span>
                   </div>
 
@@ -285,12 +297,12 @@ export function MatchList({
                       <input
                         aria-label={`Goles de ${homeTeam?.name || m.placeholderHome || 'Local'}`}
                         type="text"
-                        disabled={lock.locked}
+                        disabled={isLocked}
                         value={homeInputVal}
                         placeholder="-"
                         onChange={(e) => handleScoreChange(m.id, 'home', e.target.value)}
                         className={`w-9 h-9 text-center rounded-none border font-mono text-base font-bold outline-none focus:border-brand-primary transition-colors ${
-                          lock.locked
+                          isLocked
                             ? 'bg-slate-950 border-slate-850 text-slate-600'
                             : 'bg-black border-slate-700 text-white'
                         }`}
@@ -299,12 +311,12 @@ export function MatchList({
                       <input
                         aria-label={`Goles de ${awayTeam?.name || m.placeholderAway || 'Visitante'}`}
                         type="text"
-                        disabled={lock.locked}
+                        disabled={isLocked}
                         value={awayInputVal}
                         placeholder="-"
                         onChange={(e) => handleScoreChange(m.id, 'away', e.target.value)}
                         className={`w-9 h-9 text-center rounded-none border font-mono text-base font-bold outline-none focus:border-brand-primary transition-colors ${
-                          lock.locked
+                          isLocked
                             ? 'bg-slate-950 border-slate-850 text-slate-600'
                             : 'bg-black border-slate-700 text-white'
                         }`}
@@ -335,7 +347,7 @@ export function MatchList({
                       </div>
                       <div className="flex justify-center gap-1.5">
                         <button
-                          disabled={lock.locked}
+                          disabled={isLocked}
                           onClick={() => selectAdvancingWinner(m.id, m.homeTeamId)}
                           className={`px-3 py-1 text-[10px] rounded-sm transition font-bold font-mono uppercase ${
                             winnerAdv === m.homeTeamId
@@ -346,7 +358,7 @@ export function MatchList({
                           {homeTeam?.code || m.placeholderHome || 'Local'}
                         </button>
                         <button
-                          disabled={lock.locked}
+                          disabled={isLocked}
                           onClick={() => selectAdvancingWinner(m.id, m.awayTeamId)}
                           className={`px-3 py-1 text-[10px] rounded-sm transition font-bold font-mono uppercase ${
                             winnerAdv === m.awayTeamId

@@ -42,6 +42,13 @@ export function UserProfile({
     const existing = participants.find((p) => p.email.toLowerCase() === formattedEmail);
 
     if (existing) {
+      if (formattedEmail === 'edieraristizabal@gmail.com') {
+        const code = prompt('Ingrese la contraseña de administrador para iniciar sesión:');
+        if (code !== 'geohazard2026') {
+          setErrorMessage('Contraseña de administrador incorrecta.');
+          return;
+        }
+      }
       // Log them in
       onSelectParticipant(existing.id);
       setName('');
@@ -49,10 +56,31 @@ export function UserProfile({
       return;
     }
 
+    if (formattedEmail === 'edieraristizabal@gmail.com') {
+      const code = prompt('Ingrese la contraseña de administrador para registrar este correo:');
+      if (code !== 'geohazard2026') {
+        setErrorMessage('Contraseña de administrador incorrecta.');
+        return;
+      }
+    }
+
     // Register
     onRegisterParticipant(name.trim(), formattedEmail, selectedAvatarId);
     setName('');
     setEmail('');
+  };
+
+  const handleResendRequest = () => {
+    if (!activeParticipant) return;
+    const pName = activeParticipant.name;
+    const pEmail = activeParticipant.email;
+    const pAvatar = activeParticipant.avatarUrl;
+    
+    const subject = encodeURIComponent(`Inscripción Polla Geohazard: ${pName}`);
+    const approveUrl = `https://edieraristizabal.github.io/Polla_GEOHAZARD/?approve_name=${encodeURIComponent(pName)}&approve_email=${encodeURIComponent(pEmail)}&approve_avatar=${encodeURIComponent(pAvatar)}`;
+    const body = encodeURIComponent(`Hola Edier,\n\nQuiero registrarme en la Polla Geohazard.\nNombre: ${pName}\nCorreo: ${pEmail}\nAvatar: ${pAvatar}\n\nPor favor aprueba mi inscripción haciendo clic en el siguiente enlace:\n${approveUrl}`);
+    
+    window.open(`mailto:edieraristizabal@gmail.com?subject=${subject}&body=${body}`, '_blank');
   };
 
   // Check how many matches the active user has predicted out of total matches
@@ -111,9 +139,15 @@ export function UserProfile({
               <span className="text-[10px] text-slate-500 font-mono block truncate mt-0.5">
                 {activeParticipant.email}
               </span>
-              <span className="text-[10px] text-brand-primary font-mono block mt-1.5 uppercase font-black">
-                PUNTAJE ACTUAL: {activeParticipant.points} PTS
-              </span>
+              {activeParticipant.status === 'pending' ? (
+                <span className="text-[10px] text-amber-500 font-mono block mt-1.5 uppercase font-black">
+                  ⏳ PENDIENTE DE APROBACIÓN
+                </span>
+              ) : (
+                <span className="text-[10px] text-brand-primary font-mono block mt-1.5 uppercase font-black">
+                  PUNTAJE ACTUAL: {activeParticipant.points} PTS
+                </span>
+              )}
             </div>
           </div>
 
@@ -140,7 +174,24 @@ export function UserProfile({
               />
             </div>
 
-            {currentPredStats.isDone ? (
+            {activeParticipant.status === 'pending' ? (
+              <div className="bg-amber-950/15 border border-amber-900/50 text-amber-400 p-3 rounded-sm text-xs space-y-2">
+                <div className="flex gap-2 font-bold uppercase tracking-wide text-[10px] items-center">
+                  <AlertOctagon size={14} className="shrink-0" />
+                  <span>Inscripción Pendiente</span>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-normal">
+                  Tu perfil se ha creado localmente, pero el administrador (Edier) debe autorizarte para que tus puntajes y pronósticos aparezcan en la tabla general.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResendRequest}
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-black font-mono font-black text-[9px] py-1.5 uppercase rounded-sm transition cursor-pointer text-center"
+                >
+                  ✉️ Enviar correo de solicitud
+                </button>
+              </div>
+            ) : currentPredStats.isDone ? (
               <div className="bg-emerald-950/10 border border-emerald-950 text-brand-primary p-2.5 rounded-sm text-xs flex gap-2">
                 <CheckCircle2 size={14} className="shrink-0 mt-0.5" />
                 <div>

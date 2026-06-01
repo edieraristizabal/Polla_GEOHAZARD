@@ -33,73 +33,6 @@ export default function App() {
 
   const [selectedGroupStandings, setSelectedGroupStandings] = useState<string>('A');
 
-  // --- INITIALIZATION ---
-  useEffect(() => {
-    // 1. Load config
-    const savedConfig = localStorage.getItem('geohazard_config');
-    let activeConfig = config;
-    if (savedConfig) {
-      try {
-        activeConfig = JSON.parse(savedConfig);
-        setConfig(activeConfig);
-      } catch (e) {
-        console.error('Error loading config', e);
-      }
-    }
-
-    // 2. Load matches
-    const savedMatches = localStorage.getItem('geohazard_matches');
-    let loadedMatches: Match[] = INITIAL_MATCHES;
-    if (savedMatches) {
-      try {
-        loadedMatches = JSON.parse(savedMatches);
-      } catch (e) {
-        console.error('Error loading matches', e);
-      }
-    }
-
-    // 3. Load participants (Merge official repository list with local overrides)
-    const officialParticipants = getPreseededParticipants(loadedMatches);
-    const savedPart = localStorage.getItem('geohazard_participants');
-    let localParticipants: Participant[] = [];
-    if (savedPart) {
-      try {
-        localParticipants = JSON.parse(savedPart);
-      } catch (e) {
-        console.error('Error loading local participants', e);
-      }
-    }
-
-    // Merge: official repository participants always take precedence, and local-only ones are appended
-    const loadedParticipants = [...officialParticipants];
-    localParticipants.forEach((lp) => {
-      if (!loadedParticipants.some((op) => op.id === lp.id)) {
-        loadedParticipants.push(lp);
-      }
-    });
-
-    // Run propagation and points matching once to make sure lists are perfectly synced
-    // Before loading to state:
-    const { resolvedMatches, updatedParticipants } = runRecalculation(loadedMatches, loadedParticipants);
-
-    setMatches(resolvedMatches);
-    setParticipants(updatedParticipants);
-
-    localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
-    localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
-
-    // 4. Active participant
-    const savedActiveId = localStorage.getItem('geohazard_active_id');
-    if (savedActiveId && updatedParticipants.some(p => p.id === savedActiveId)) {
-      setActiveParticipantId(savedActiveId);
-    } else if (updatedParticipants.length > 0) {
-      // Default to first participant if active participant not set
-      setActiveParticipantId(updatedParticipants[0].id);
-    } else {
-      setActiveParticipantId(null);
-    }
-  }, []);
-
   // --- UTILITY TO COMMENCE RESOLUTION PIPELINE ---
   const runRecalculation = (currentMatches: Match[], currentParticipants: Participant[]): { resolvedMatches: Match[], updatedParticipants: Participant[] } => {
     // Resolve teams playing in Octavos -> Final
@@ -117,6 +50,202 @@ export default function App() {
 
     return { resolvedMatches: resolved, updatedParticipants: updated };
   };
+
+  // --- INITIALIZATION ---
+  useEffect(() => {
+    // 1. Load config
+    const savedConfig = localStorage.getItem('geohazard_config');
+    let activeConfig = config;
+    if (savedConfig) {
+      try {
+        activeConfig = JSON.parse(savedConfig);
+        setConfig(activeConfig);
+      } catch (e) {
+        console.error('Error loading config', e);
+      }
+    }
+
+    async function loadData() {
+      // 2. Fetch matches from public/data/matches.json, fallback to localStorage/static
+      let loadedMatches: Match[] = INITIAL_MATCHES;
+      try {
+        const res = await fetch('./data/matches.json?t=' + Date.now());
+        if (res.ok) {
+          const remoteMatches = await res.json();
+          if (remoteMatches && Array.isArray(remoteMatches) && remoteMatches.length > 0) {
+            loadedMatches = remoteMatches;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not fetch remote matches, using offline fallback', e);
+        const savedMatches = localStorage.getItem('geohazard_matches');
+        if (savedMatches) {
+          try {
+            loadedMatches = JSON.parse(savedMatches);
+          } catch (err) {
+            console.error('Error loading matches from localstorage', err);
+          }
+        }
+      }
+
+      // 3. Fetch participants from public/data/participants.json, fallback to localStorage/default
+      let baseParticipants: Participant[] = getPreseededParticipants(loadedMatches);
+      try {
+        const res = await fetch('./data/participants.json?t=' + Date.now());
+        if (res.ok) {
+          const remoteParticipants = await res.json();
+          if (remoteParticipants && Array.isArray(remoteParticipants)) {
+            baseParticipants = remoteParticipants;
+          }
+        }
+      } catch (e) {
+        console.warn('Could not fetch remote participants, using offline fallback', e);
+      }
+
+      const savedPart = localStorage.getItem('geohazard_participants');
+      let localParticipants: Participant[] = [];
+      if (savedPart) {
+        try {
+          localParticipants = JSON.parse(savedPart);
+        } catch (e) {
+          console.error('Error loading local participants', e);
+        }
+      }
+
+      // Merge: fetched / base participants always take precedence, and local-only ones are appended
+      const loadedParticipants = [...baseParticipants];
+      localParticipants.forEach((lp) => {
+        if (!loadedParticipants.some((op) => op.id === lp.id)) {
+          loadedParticipants.push(lp);
+        }
+      });
+
+      // Run propagation and points matching once to make sure lists are perfectly synced
+      const { resolvedMatches, updatedParticipants } = runRecalculation(loadedMatches, loadedParticipants);
+
+      setMatches(resolvedMatches);
+      setParticipants(updatedParticipants);
+
+      localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
+      localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
+
+      // 4. Active participant
+      const savedActiveId = localStorage.getItem('geohazard_active_id');
+      let finalActiveId: string | null = null;
+      if (savedActiveId && updatedParticipants.some(p => p.id === savedActiveId)) {
+        finalActiveId = savedActiveId;
+      } else if (updatedParticipants.length > 0) {
+        finalActiveId = updatedParticipants[0].id;
+      }
+      setActiveParticipantId(finalActiveId);
+
+      // 5. Check URL parameters for approval requests
+      const urlParams = new URLSearchParams(window.location.search);
+      const approveName = urlParams.get('approve_name');
+      const approveEmail = urlParams.get('approve_email');
+      const approveAvatar = urlParams.get('approve_avatar');
+
+      if (approveName && approveEmail && approveAvatar) {
+        const code = prompt(`Solicitud de inscripción para ${approveName} (${approveEmail}).\nIngrese la contraseña de administrador para aprobar:`);
+        if (code === 'geohazard2026') {
+          let updatedList = [...updatedParticipants];
+          const index = updatedList.findIndex(p => p.email.toLowerCase() === approveEmail.toLowerCase());
+          
+          if (index >= 0) {
+            updatedList[index] = {
+              ...updatedList[index],
+              status: undefined // Approved
+            };
+          } else {
+            updatedList.push({
+              id: approveEmail.toLowerCase(),
+              name: approveName,
+              email: approveEmail.toLowerCase(),
+              avatarUrl: approveAvatar,
+              predictions: {},
+              points: 0,
+              stats: { correctWinner: 0, correctExactScore: 0, correctQualifiedTeams: 0 },
+              hasAutoFilled: false,
+              isCompleted: false,
+              status: undefined // Approved
+            });
+          }
+
+          const recalc = runRecalculation(resolvedMatches, updatedList);
+          setParticipants(recalc.updatedParticipants);
+          localStorage.setItem('geohazard_participants', JSON.stringify(recalc.updatedParticipants));
+          
+          setActiveParticipantId('edieraristizabal@gmail.com');
+          localStorage.setItem('geohazard_active_id', 'edieraristizabal@gmail.com');
+
+          alert(`Participante ${approveName} aprobado con éxito.`);
+
+          const notifySubject = encodeURIComponent('Inscripción Aprobada - Polla Geohazard');
+          const notifyBody = encodeURIComponent(`Hola ${approveName},\n\nTu inscripción en la Polla Geohazard ha sido aprobada por el administrador.\n\nYa puedes ingresar a la aplicación y registrar tus predicciones: https://edieraristizabal.github.io/Polla_GEOHAZARD/\n\n¡Buena suerte!`);
+          window.open(`mailto:${approveEmail}?subject=${notifySubject}&body=${notifyBody}`, '_blank');
+        } else {
+          alert('Contraseña de administrador incorrecta. No se pudo realizar la aprobación.');
+        }
+
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    loadData();
+
+    // Periodic synchronization
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('./data/matches.json?t=' + Date.now());
+        if (res.ok) {
+          const remoteMatches = await res.json();
+          if (remoteMatches && Array.isArray(remoteMatches) && remoteMatches.length > 0) {
+            let baseParticipants: Participant[] = [];
+            try {
+              const pres = await fetch('./data/participants.json?t=' + Date.now());
+              if (pres.ok) {
+                const remoteParticipants = await pres.json();
+                if (remoteParticipants && Array.isArray(remoteParticipants)) {
+                  baseParticipants = remoteParticipants;
+                }
+              }
+            } catch (err) {
+              console.warn('Could not fetch remote participants in interval', err);
+            }
+
+            const savedPart = localStorage.getItem('geohazard_participants');
+            let localParticipants: Participant[] = [];
+            if (savedPart) {
+              try {
+                localParticipants = JSON.parse(savedPart);
+              } catch (e) {
+                console.error('Error loading local participants in interval', e);
+              }
+            }
+
+            const loadedParticipants = [...baseParticipants];
+            localParticipants.forEach((lp) => {
+              if (!loadedParticipants.some((op) => op.id === lp.id)) {
+                loadedParticipants.push(lp);
+              }
+            });
+
+            setMatches((currMatches) => {
+              const { resolvedMatches, updatedParticipants } = runRecalculation(remoteMatches, loadedParticipants);
+              setParticipants(updatedParticipants);
+              localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
+              localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
+              return resolvedMatches;
+            });
+          }
+        }
+      } catch (e) {
+        console.warn('Periodic sync failed', e);
+      }
+    }, 15000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // --- ACTIONS ---
 
@@ -185,6 +314,13 @@ export default function App() {
   };
 
   const handleSelectParticipant = (id: string | null) => {
+    if (id === 'edieraristizabal@gmail.com') {
+      const code = prompt('Ingrese la contraseña de administrador para iniciar sesión:');
+      if (code !== 'geohazard2026') {
+        alert('Contraseña de administrador incorrecta.');
+        return;
+      }
+    }
     setActiveParticipantId(id);
     if (id) {
       localStorage.setItem('geohazard_active_id', id);
@@ -196,6 +332,11 @@ export default function App() {
   // User Registers
   const handleRegisterParticipant = (name: string, email: string, avatarId: string) => {
     const cleanEmail = email.trim().toLowerCase();
+    
+    // Admin bypasses approval
+    const isEdier = cleanEmail === 'edieraristizabal@gmail.com';
+    const initialStatus = isEdier ? undefined : 'pending';
+
     const newParticipant: Participant = {
       id: cleanEmail,
       name,
@@ -205,7 +346,8 @@ export default function App() {
       points: 0,
       stats: { correctWinner: 0, correctExactScore: 0, correctQualifiedTeams: 0 },
       hasAutoFilled: false,
-      isCompleted: false
+      isCompleted: false,
+      status: initialStatus
     };
 
     const nextParticipants = [...participants, newParticipant];
@@ -227,6 +369,15 @@ export default function App() {
     localStorage.setItem('geohazard_participants', JSON.stringify(updatedParticipants));
     localStorage.setItem('geohazard_matches', JSON.stringify(resolvedMatches));
     localStorage.setItem('geohazard_active_id', cleanEmail);
+
+    // If not Edier, open the email composer to request approval
+    if (!isEdier) {
+      const subject = encodeURIComponent(`Inscripción Polla Geohazard: ${name}`);
+      const approveUrl = `https://edieraristizabal.github.io/Polla_GEOHAZARD/?approve_name=${encodeURIComponent(name)}&approve_email=${encodeURIComponent(cleanEmail)}&approve_avatar=${encodeURIComponent(avatarId)}`;
+      const body = encodeURIComponent(`Hola Edier,\n\nQuiero registrarme en la Polla Geohazard.\nNombre: ${name}\nCorreo: ${cleanEmail}\nAvatar: ${avatarId}\n\nPor favor aprueba mi inscripción haciendo clic en el siguiente enlace:\n${approveUrl}`);
+      
+      window.open(`mailto:edieraristizabal@gmail.com?subject=${subject}&body=${body}`, '_blank');
+    }
   };
 
   // User saves a prediction
@@ -681,18 +832,20 @@ export default function App() {
           />
 
           {/* Dedicated Admin simulator */}
-          <MatchAdmin
-            config={config}
-            matches={matches}
-            participants={participants}
-            onUpdateConfig={handleUpdateConfig}
-            onUpdateMatchScore={handleUpdateMatchScore}
-            onSimulateGroups={handleSimulateGroups}
-            onSimulateFullTournament={handleSimulateFullTournament}
-            onResetTournament={handleResetTournament}
-            onImportParticipant={handleImportParticipant}
-            onClearAllParticipants={handleClearAllParticipants}
-          />
+          {activeParticipantId === 'edieraristizabal@gmail.com' && (
+            <MatchAdmin
+              config={config}
+              matches={matches}
+              participants={participants}
+              onUpdateConfig={handleUpdateConfig}
+              onUpdateMatchScore={handleUpdateMatchScore}
+              onSimulateGroups={handleSimulateGroups}
+              onSimulateFullTournament={handleSimulateFullTournament}
+              onResetTournament={handleResetTournament}
+              onImportParticipant={handleImportParticipant}
+              onClearAllParticipants={handleClearAllParticipants}
+            />
+          )}
         </section>
 
         {/* Right sidebar area: Profile, rules and real world standings solver */}
