@@ -66,6 +66,16 @@ async function run() {
       );
       
       if (match) {
+        const isFinished = game.finished && game.finished.toUpperCase() === 'TRUE';
+        if (!isFinished) {
+          if (match.homeScore !== null || match.awayScore !== null) {
+            match.homeScore = null;
+            match.awayScore = null;
+            groupUpdated++;
+          }
+          return;
+        }
+
         const homeScore = game.home_score !== 'null' && game.home_score !== null ? Number(game.home_score) : null;
         const awayScore = game.away_score !== 'null' && game.away_score !== null ? Number(game.away_score) : null;
         
@@ -110,6 +120,16 @@ async function run() {
         if (homeCode) match.homeTeamId = homeCode;
         if (awayCode) match.awayTeamId = awayCode;
         
+        const isFinished = game.finished && game.finished.toUpperCase() === 'TRUE';
+        if (!isFinished) {
+          if (match.homeScore !== null || match.awayScore !== null || match.winnerIdToAdvance) {
+            match.homeScore = null;
+            match.awayScore = null;
+            match.winnerIdToAdvance = null;
+          }
+          return;
+        }
+
         // Update scores
         const homeScore = game.home_score !== 'null' && game.home_score !== null ? Number(game.home_score) : null;
         const awayScore = game.away_score !== 'null' && game.away_score !== null ? Number(game.away_score) : null;

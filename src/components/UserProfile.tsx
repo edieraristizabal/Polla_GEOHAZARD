@@ -78,7 +78,7 @@ export function UserProfile({
     
     const subject = encodeURIComponent(`Inscripción Polla Geohazard: ${pName}`);
     const approveUrl = `https://edieraristizabal.github.io/Polla_GEOHAZARD/?approve_name=${encodeURIComponent(pName)}&approve_email=${encodeURIComponent(pEmail)}&approve_avatar=${encodeURIComponent(pAvatar)}`;
-    const body = encodeURIComponent(`Hola Edier,\n\nQuiero registrarme en la Polla Geohazard.\nNombre: ${pName}\nCorreo: ${pEmail}\nAvatar: ${pAvatar}\n\nPor favor aprueba mi inscripción haciendo clic en el siguiente enlace:\n${approveUrl}`);
+    const body = encodeURIComponent(`Hola Administrador,\n\nQuiero registrarme en la Polla Geohazard.\nNombre: ${pName}\nCorreo: ${pEmail}\nAvatar: ${pAvatar}\n\nPor favor aprueba mi inscripción haciendo clic en el siguiente enlace:\n${approveUrl}`);
     
     window.open(`mailto:edieraristizabal@gmail.com?subject=${subject}&body=${body}`, '_blank');
   };
@@ -103,7 +103,7 @@ export function UserProfile({
         const base64Str = btoa(unescape(encodeURIComponent(predStr)));
         const subject = encodeURIComponent(`Pronósticos Polla Geohazard: ${activeParticipant.name}`);
         const importUrl = `https://edieraristizabal.github.io/Polla_GEOHAZARD/?import_predictions=true&email=${encodeURIComponent(activeParticipant.email)}&data=${encodeURIComponent(base64Str)}`;
-        const body = encodeURIComponent(`Hola Edier, aquí están mis pronósticos de la Polla Geohazard.\n\nPara importarlos y guardarlos automáticamente en la aplicación, haz clic en el siguiente enlace:\n${importUrl}\n\nPor si el enlace anterior no funciona, aquí está el JSON de mi cartilla (que ya se copió a tu portapapeles):\n\n${jsonStr}`);
+        const body = encodeURIComponent(`Hola Administrador, aquí están mis pronósticos de la Polla Geohazard.\n\nPara importarlos y guardarlos automáticamente en la aplicación, haz clic en el siguiente enlace:\n${importUrl}\n\nPor si el enlace anterior no funciona, aquí está el JSON de mi cartilla (que ya se copió a tu portapapeles):\n\n${jsonStr}`);
         
         window.open(`mailto:edieraristizabal@gmail.com?subject=${subject}&body=${body}`, '_blank');
       })
@@ -211,7 +211,7 @@ export function UserProfile({
                   <span>Inscripción Pendiente</span>
                 </div>
                 <p className="text-[10px] text-slate-400 leading-normal">
-                  Tu perfil se ha creado localmente, pero el administrador (Edier) debe autorizarte para que tus puntajes y pronósticos aparezcan en la tabla general.
+                  Tu perfil se ha creado localmente, pero el administrador debe autorizarte para que tus puntajes y pronósticos aparezcan en la tabla general.
                 </p>
                 <button
                   type="button"
@@ -249,7 +249,7 @@ export function UserProfile({
             onClick={handleSendPredictionsMail}
             className="w-full mb-2 py-2 bg-[#F59E0B]/20 hover:bg-[#F59E0B]/30 border border-[#F59E0B]/30 rounded-sm text-[10px] text-[#F59E0B] hover:text-white transition-colors font-mono uppercase font-black tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
           >
-            ✉️ Enviar Pronósticos a Edier (Email)
+            ✉️ Enviar Pronósticos a Administrador (Email)
           </button>
 
           <button
