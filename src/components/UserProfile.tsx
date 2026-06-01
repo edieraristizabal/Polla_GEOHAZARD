@@ -9,6 +9,7 @@ interface UserProfileProps {
   matches: Match[];
   onRegisterParticipant: (name: string, email: string, avatarId: string) => void;
   onSelectParticipant: (id: string | null) => void;
+  onAdminSyncOwnPredictions?: () => void;
 }
 
 export function UserProfile({
@@ -16,7 +17,8 @@ export function UserProfile({
   participants,
   matches,
   onRegisterParticipant,
-  onSelectParticipant
+  onSelectParticipant,
+  onAdminSyncOwnPredictions
 }: UserProfileProps) {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -244,13 +246,23 @@ export function UserProfile({
             )}
           </div>
 
-          <button
-            type="button"
-            onClick={handleSendPredictionsMail}
-            className="w-full mb-2 py-2 bg-[#F59E0B]/20 hover:bg-[#F59E0B]/30 border border-[#F59E0B]/30 rounded-sm text-[10px] text-[#F59E0B] hover:text-white transition-colors font-mono uppercase font-black tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
-          >
-            ✉️ Enviar Pronósticos a Administrador (Email)
-          </button>
+          {activeParticipant.email === 'edieraristizabal@gmail.com' ? (
+            <button
+              type="button"
+              onClick={onAdminSyncOwnPredictions}
+              className="w-full mb-2 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 rounded-sm text-[10px] text-emerald-400 hover:text-white transition-colors font-mono uppercase font-black tracking-wider cursor-pointer flex items-center justify-center gap-1.5 font-bold"
+            >
+              🔄 Sincronizar mis Pronósticos en GitHub
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSendPredictionsMail}
+              className="w-full mb-2 py-2 bg-[#F59E0B]/20 hover:bg-[#F59E0B]/30 border border-[#F59E0B]/30 rounded-sm text-[10px] text-[#F59E0B] hover:text-white transition-colors font-mono uppercase font-black tracking-wider cursor-pointer flex items-center justify-center gap-1.5"
+            >
+              ✉️ Enviar Pronósticos a Administrador (Email)
+            </button>
+          )}
 
           <button
             type="button"

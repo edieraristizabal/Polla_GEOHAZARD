@@ -41,6 +41,7 @@ export default function App() {
   const [isCommiting, setIsCommiting] = useState<boolean>(false);
   const [adminPasswordInput, setAdminPasswordInput] = useState<string>('');
   const [githubPatInput, setGithubPatInput] = useState<string>(() => localStorage.getItem('geohazard_github_pat') || '');
+  const [showAdminSyncModal, setShowAdminSyncModal] = useState<boolean>(false);
 
   // --- UTILITY TO COMMENCE RESOLUTION PIPELINE ---
   const runRecalculation = (currentMatches: Match[], currentParticipants: Participant[]): { resolvedMatches: Match[], updatedParticipants: Participant[] } => {
@@ -757,6 +758,29 @@ export default function App() {
     }
   };
 
+  const handleAdminSyncOwnPredictionsSubmit = async () => {
+    const token = githubPatInput || githubPat;
+    if (!token) {
+      alert('Se requiere un GitHub Personal Access Token (PAT) para guardar el cambio en el repositorio.');
+      return;
+    }
+    
+    setIsCommiting(true);
+    try {
+      await saveParticipantsToGitHub(participants, token);
+      
+      setGithubPat(token);
+      localStorage.setItem('geohazard_github_pat', token);
+      
+      alert('✅ ¡Tus pronósticos se han sincronizado con éxito en GitHub!');
+      setShowAdminSyncModal(false);
+    } catch (e: any) {
+      alert(`Error al guardar en GitHub: ${e.message}`);
+    } finally {
+      setIsCommiting(false);
+    }
+  };
+
 
   // Active user's predictions list
   const activeUser = participants.find((p) => p.id === activeParticipantId) || null;
@@ -855,6 +879,7 @@ export default function App() {
             matches={matches}
             onRegisterParticipant={handleRegisterParticipant}
             onSelectParticipant={handleSelectParticipant}
+            onAdminSyncOwnPredictions={() => setShowAdminSyncModal(true)}
           />
 
           {/* Custom Pool rules sheet */}
@@ -1052,6 +1077,63 @@ export default function App() {
                 className="flex-1 bg-brand-primary hover:bg-brand-primary/80 text-black font-mono text-[11px] font-black uppercase py-2 rounded transition cursor-pointer disabled:opacity-50"
               >
                 {isCommiting ? 'Importando...' : 'Importar y Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAdminSyncModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm">
+          <div className="bg-[#0f1219] border border-slate-800 rounded-lg p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-900">
+              <span className="text-xl font-sans">🔄</span>
+              <div>
+                <h3 className="text-sm font-black font-mono uppercase tracking-wider text-slate-100">
+                  Sincronizar tus Pronósticos
+                </h3>
+                <p className="text-[11px] text-slate-400">
+                  Guardar tus pronósticos directamente en GitHub
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-[#080a0f] p-3.5 rounded border border-slate-900">
+              <p className="text-[11px] text-slate-400 leading-normal">
+                Como Administrador, puedes guardar tus cambios de pronósticos en la base de datos oficial remota directamente.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-mono uppercase text-slate-400 mb-1">
+                GitHub Personal Access Token (PAT)
+              </label>
+              <input
+                type="password"
+                placeholder="ghp_..."
+                value={githubPatInput}
+                onChange={(e) => setGithubPatInput(e.target.value)}
+                className="w-full bg-[#080a0f] border border-slate-800 text-xs px-3 py-2 rounded focus:outline-none focus:border-brand-primary text-white font-mono"
+              />
+              <p className="text-[9px] text-slate-500 mt-1 leading-normal">
+                Necesario para actualizar el archivo `participants.json` directamente en el repositorio remoto.
+              </p>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setShowAdminSyncModal(false)}
+                disabled={isCommiting}
+                className="flex-1 bg-slate-900 hover:bg-slate-800 text-slate-300 font-mono text-[11px] font-black uppercase py-2 rounded transition cursor-pointer disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleAdminSyncOwnPredictionsSubmit}
+                disabled={isCommiting}
+                className="flex-1 bg-brand-primary hover:bg-brand-primary/80 text-black font-mono text-[11px] font-black uppercase py-2 rounded transition cursor-pointer disabled:opacity-50"
+              >
+                {isCommiting ? 'Sincronizando...' : 'Sincronizar'}
               </button>
             </div>
           </div>
