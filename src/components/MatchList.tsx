@@ -9,6 +9,7 @@ interface MatchListProps {
   activeParticipant: Participant | null;
   onSavePrediction: (matchId: string, homeScore: number, awayScore: number, winnerIdToAdvance?: string | null) => void;
   onRandomizeRemaining: () => void;
+  actualMatches: Match[];
 }
 
 export function MatchList({
@@ -16,7 +17,8 @@ export function MatchList({
   predictions,
   activeParticipant,
   onSavePrediction,
-  onRandomizeRemaining
+  onRandomizeRemaining,
+  actualMatches
 }: MatchListProps) {
   const [activeTab, setActiveTab] = useState<'groups' | 'knockouts'>('groups');
   const [editingScores, setEditingScores] = useState<Record<string, { home: string; away: string; winnerIdToAdvance: string | null }>>({});
@@ -31,13 +33,14 @@ export function MatchList({
 
   // Check if a match is locked according to the strict 5-minute pre-kickoff rules
   const getLockStatus = (m: Match) => {
+    const realMatch = actualMatches.find((x) => x.id === m.id) || m;
     const kickoff = new Date(m.kickoffTime).getTime();
     const nowReal = Date.now();
     const FIVE_MINUTES = 5 * 60 * 1000;
 
     const isWithinFiveMinutes = (kickoff - nowReal) < FIVE_MINUTES;
     const isStarted = nowReal >= kickoff;
-    const isFinished = m.homeScore !== null && m.awayScore !== null;
+    const isFinished = realMatch.homeScore !== null && realMatch.awayScore !== null;
 
     if (isFinished) {
       return { locked: true, reason: 'Partido Finalizado' };
@@ -247,8 +250,9 @@ export function MatchList({
               const isSavingDisabled = homeInputVal === '' || awayInputVal === '' || isLocked;
               
               // Highlight if predicted value and real value align
+              const realM = actualMatches.find((x) => x.id === m.id) || m;
               const scoreEntered = pred !== undefined && pred.homeScore !== null && pred.homeScore !== undefined && pred.awayScore !== null && pred.awayScore !== undefined;
-              const hasActualResult = m.homeScore !== null && m.awayScore !== null;
+              const hasActualResult = realM.homeScore !== null && realM.awayScore !== null;
 
               return (
                 <div
@@ -407,7 +411,7 @@ export function MatchList({
                     <div className="mt-2 bg-[#0A0C10] border border-slate-800 py-1.5 px-2.5 rounded-sm text-center text-[10px] font-mono text-slate-500 uppercase font-bold tracking-widest">
                       Marcador Real:{' '}
                       <span className="text-brand-primary text-xs ml-1">
-                        {m.homeScore} : {m.awayScore}
+                        {realM.homeScore} : {realM.awayScore}
                       </span>
                     </div>
                   )}

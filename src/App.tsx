@@ -934,6 +934,7 @@ export default function App() {
               activeParticipant={activeUser}
               onSavePrediction={handleSavePrediction}
               onRandomizeRemaining={handleRandomizeRemaining}
+              actualMatches={matches}
             />
           )}
           {activeMainTab === 'standings' && (
