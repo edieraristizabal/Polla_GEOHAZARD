@@ -295,8 +295,8 @@
       },
       "M_C4": {
         "matchId": "M_C4",
-        "homeScore": 0,
-        "awayScore": 2,
+        "homeScore": 1,
+        "awayScore": 0,
         "winnerIdToAdvance": null
       },
       "M_C5": {
