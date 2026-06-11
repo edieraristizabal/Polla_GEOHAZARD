@@ -6,8 +6,8 @@
     "stage": "groups",
     "group": "A",
     "kickoffTime": "2026-06-11T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 2,
+    "awayScore": 0,
     "description": "México vs Sudáfrica (Grupo A)"
   },
   {
