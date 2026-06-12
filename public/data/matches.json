@@ -17,8 +17,8 @@
     "stage": "groups",
     "group": "A",
     "kickoffTime": "2026-06-11T18:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 2,
+    "awayScore": 1,
     "description": "Corea del Sur vs República Checa (Grupo A)"
   },
   {
