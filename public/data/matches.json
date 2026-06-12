@@ -72,8 +72,8 @@
     "stage": "groups",
     "group": "B",
     "kickoffTime": "2026-06-11T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 1,
     "description": "Canadá vs Bosnia-Herzegovina (Grupo B)"
   },
   {
