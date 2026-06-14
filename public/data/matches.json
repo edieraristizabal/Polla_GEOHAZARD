@@ -215,8 +215,8 @@
     "stage": "groups",
     "group": "D",
     "kickoffTime": "2026-06-12T18:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 2,
+    "awayScore": 0,
     "description": "Australia vs Turquía (Grupo D)"
   },
   {
