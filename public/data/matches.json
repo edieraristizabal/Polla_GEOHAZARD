@@ -138,8 +138,8 @@
     "stage": "groups",
     "group": "C",
     "kickoffTime": "2026-06-12T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 1,
     "description": "Brasil vs Marruecos (Grupo C)"
   },
   {
