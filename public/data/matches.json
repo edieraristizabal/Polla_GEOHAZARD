@@ -402,8 +402,8 @@
     "stage": "groups",
     "group": "G",
     "kickoffTime": "2026-06-14T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 1,
     "description": "Bélgica vs Egipto (Grupo G)"
   },
   {
