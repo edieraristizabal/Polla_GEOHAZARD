@@ -468,8 +468,8 @@
     "stage": "groups",
     "group": "H",
     "kickoffTime": "2026-06-14T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 0,
+    "awayScore": 0,
     "description": "España vs Cabo Verde (Grupo H)"
   },
   {
