@@ -534,8 +534,8 @@
     "stage": "groups",
     "group": "I",
     "kickoffTime": "2026-06-15T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 3,
+    "awayScore": 1,
     "description": "Francia vs Senegal (Grupo I)"
   },
   {
