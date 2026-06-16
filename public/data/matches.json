@@ -479,8 +479,8 @@
     "stage": "groups",
     "group": "H",
     "kickoffTime": "2026-06-14T18:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 1,
     "description": "Arabia Saudita vs Uruguay (Grupo H)"
   },
   {
