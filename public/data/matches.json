@@ -413,8 +413,8 @@
     "stage": "groups",
     "group": "G",
     "kickoffTime": "2026-06-14T18:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 2,
+    "awayScore": 2,
     "description": "Irán vs Nueva Zelanda (Grupo G)"
   },
   {
