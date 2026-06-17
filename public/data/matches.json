@@ -732,8 +732,8 @@
     "stage": "groups",
     "group": "L",
     "kickoffTime": "2026-06-16T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 4,
+    "awayScore": 2,
     "description": "Inglaterra vs Croacia (Grupo L)"
   },
   {
