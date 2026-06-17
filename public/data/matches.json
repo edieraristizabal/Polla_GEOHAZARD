@@ -666,8 +666,8 @@
     "stage": "groups",
     "group": "K",
     "kickoffTime": "2026-06-16T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 1,
     "description": "Portugal vs R. D. Congo (Grupo K)"
   },
   {
