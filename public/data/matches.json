@@ -611,8 +611,8 @@
     "stage": "groups",
     "group": "J",
     "kickoffTime": "2026-06-15T18:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 3,
+    "awayScore": 1,
     "description": "Austria vs Jordania (Grupo J)"
   },
   {
