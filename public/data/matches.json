@@ -28,8 +28,8 @@
     "stage": "groups",
     "group": "A",
     "kickoffTime": "2026-06-17T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 0,
     "description": "México vs Corea del Sur (Grupo A)"
   },
   {
