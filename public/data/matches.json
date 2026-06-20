@@ -292,8 +292,8 @@
     "stage": "groups",
     "group": "E",
     "kickoffTime": "2026-06-19T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 2,
+    "awayScore": 1,
     "description": "Alemania vs Costa de Marfil (Grupo E)"
   },
   {
