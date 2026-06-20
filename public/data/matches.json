@@ -380,8 +380,8 @@
     "stage": "groups",
     "group": "F",
     "kickoffTime": "2026-06-25T16:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 5,
+    "awayScore": 1,
     "description": "Países Bajos vs Suecia (Grupo F)"
   },
   {
