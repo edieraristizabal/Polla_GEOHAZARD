@@ -424,8 +424,8 @@
     "stage": "groups",
     "group": "G",
     "kickoffTime": "2026-06-20T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 0,
+    "awayScore": 0,
     "description": "Bélgica vs Irán (Grupo G)"
   },
   {
@@ -490,8 +490,8 @@
     "stage": "groups",
     "group": "H",
     "kickoffTime": "2026-06-20T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 4,
+    "awayScore": 0,
     "description": "España vs Arabia Saudita (Grupo H)"
   },
   {
