@@ -622,8 +622,8 @@
     "stage": "groups",
     "group": "J",
     "kickoffTime": "2026-06-21T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 2,
+    "awayScore": 0,
     "description": "Argentina vs Austria (Grupo J)"
   },
   {
