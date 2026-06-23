@@ -688,8 +688,8 @@
     "stage": "groups",
     "group": "K",
     "kickoffTime": "2026-06-22T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 5,
+    "awayScore": 0,
     "description": "Portugal vs Uzbekistán (Grupo K)"
   },
   {
