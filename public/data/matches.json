@@ -754,8 +754,8 @@
     "stage": "groups",
     "group": "L",
     "kickoffTime": "2026-06-22T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 0,
+    "awayScore": 0,
     "description": "Inglaterra vs Ghana (Grupo L)"
   },
   {
