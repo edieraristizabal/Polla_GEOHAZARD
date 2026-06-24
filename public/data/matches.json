@@ -127,8 +127,8 @@
     "stage": "groups",
     "group": "B",
     "kickoffTime": "2026-06-25T16:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 3,
+    "awayScore": 1,
     "description": "Bosnia-Herzegovina vs Catar (Grupo B)"
   },
   {
