@@ -325,8 +325,8 @@
     "stage": "groups",
     "group": "E",
     "kickoffTime": "2026-06-25T16:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 0,
+    "awayScore": 2,
     "description": "Curazao vs Costa de Marfil (Grupo E)"
   },
   {
