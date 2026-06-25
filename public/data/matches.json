@@ -193,8 +193,8 @@
     "stage": "groups",
     "group": "C",
     "kickoffTime": "2026-06-25T16:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 4,
+    "awayScore": 2,
     "description": "Marruecos vs Haití (Grupo C)"
   },
   {
