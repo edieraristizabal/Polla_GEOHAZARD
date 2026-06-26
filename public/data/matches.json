@@ -369,8 +369,8 @@
     "stage": "groups",
     "group": "F",
     "kickoffTime": "2026-06-19T18:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 1,
     "description": "Japón vs Suecia (Grupo F)"
   },
   {
