@@ -589,8 +589,8 @@
     "stage": "groups",
     "group": "I",
     "kickoffTime": "2026-06-26T16:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 5,
+    "awayScore": 0,
     "description": "Senegal vs Irak (Grupo I)"
   },
   {
