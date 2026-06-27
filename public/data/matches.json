@@ -457,8 +457,8 @@
     "stage": "groups",
     "group": "G",
     "kickoffTime": "2026-06-25T16:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 1,
     "description": "Egipto vs Irán (Grupo G)"
   },
   {
