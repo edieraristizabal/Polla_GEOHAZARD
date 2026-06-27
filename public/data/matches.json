@@ -523,8 +523,8 @@
     "stage": "groups",
     "group": "H",
     "kickoffTime": "2026-06-25T16:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 0,
+    "awayScore": 0,
     "description": "Cabo Verde vs Arabia Saudita (Grupo H)"
   },
   {
