@@ -655,8 +655,8 @@
     "stage": "groups",
     "group": "J",
     "kickoffTime": "2026-06-26T16:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 3,
+    "awayScore": 3,
     "description": "Argelia vs Austria (Grupo J)"
   },
   {
