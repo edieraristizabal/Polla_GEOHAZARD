@@ -793,7 +793,7 @@
   },
   {
     "id": "M_OF1",
-    "homeTeamId": null,
+    "homeTeamId": "PAR",
     "awayTeamId": null,
     "placeholderHome": "1º Grupo A",
     "placeholderAway": "2º Grupo B",
