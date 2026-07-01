@@ -864,7 +864,7 @@
   {
     "id": "M_OF6",
     "homeTeamId": null,
-    "awayTeamId": null,
+    "awayTeamId": "BEL",
     "placeholderHome": "1º Grupo K",
     "placeholderAway": "2º Grupo L",
     "stage": "round_of_16",
