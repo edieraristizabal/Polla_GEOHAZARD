@@ -850,7 +850,7 @@
   {
     "id": "M_OF5",
     "homeTeamId": null,
-    "awayTeamId": null,
+    "awayTeamId": "ESP",
     "placeholderHome": "1º Grupo I",
     "placeholderAway": "2º Grupo J",
     "stage": "round_of_16",
