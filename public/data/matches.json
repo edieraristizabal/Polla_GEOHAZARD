@@ -814,10 +814,10 @@
     "stage": "round_of_16",
     "group": null,
     "kickoffTime": "2026-06-27T19:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 0,
+    "awayScore": 3,
     "description": "Octavos de Final 2",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "MAR"
   },
   {
     "id": "M_OF3",
