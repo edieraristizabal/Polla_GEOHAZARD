@@ -906,7 +906,7 @@
   {
     "id": "M_QF1",
     "homeTeamId": null,
-    "awayTeamId": null,
+    "awayTeamId": "MAR",
     "placeholderHome": "Ganador Octavos 1",
     "placeholderAway": "Ganador Octavos 2",
     "stage": "quarters",
