@@ -828,10 +828,10 @@
     "stage": "round_of_16",
     "group": null,
     "kickoffTime": "2026-06-28T15:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 2,
     "description": "Octavos de Final 3",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "NOR"
   },
   {
     "id": "M_OF4",
@@ -933,7 +933,7 @@
   },
   {
     "id": "M_QF3",
-    "homeTeamId": null,
+    "homeTeamId": "NOR",
     "awayTeamId": null,
     "placeholderHome": "Ganador Octavos 5",
     "placeholderAway": "Ganador Octavos 6",
