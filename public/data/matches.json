@@ -870,10 +870,10 @@
     "stage": "round_of_16",
     "group": null,
     "kickoffTime": "2026-06-29T19:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 4,
     "description": "Octavos de Final 6",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "BEL"
   },
   {
     "id": "M_OF7",
@@ -920,7 +920,7 @@
   {
     "id": "M_QF2",
     "homeTeamId": "ESP",
-    "awayTeamId": null,
+    "awayTeamId": "BEL",
     "placeholderHome": "Ganador Octavos 3",
     "placeholderAway": "Ganador Octavos 4",
     "stage": "quarters",
