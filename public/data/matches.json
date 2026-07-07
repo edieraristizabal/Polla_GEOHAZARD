@@ -898,10 +898,10 @@
     "stage": "round_of_16",
     "group": null,
     "kickoffTime": "2026-06-30T19:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 0,
+    "awayScore": 0,
     "description": "Octavos de Final 8",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "SUI"
   },
   {
     "id": "M_QF1",
@@ -948,7 +948,7 @@
   {
     "id": "M_QF4",
     "homeTeamId": "ARG",
-    "awayTeamId": null,
+    "awayTeamId": "SUI",
     "placeholderHome": "Ganador Octavos 7",
     "placeholderAway": "Ganador Octavos 8",
     "stage": "quarters",
