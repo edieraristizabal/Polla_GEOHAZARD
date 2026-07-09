@@ -912,10 +912,10 @@
     "stage": "quarters",
     "group": null,
     "kickoffTime": "2026-07-03T17:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 2,
+    "awayScore": 0,
     "description": "Cuartos de Final 1",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "FRA"
   },
   {
     "id": "M_QF2",
