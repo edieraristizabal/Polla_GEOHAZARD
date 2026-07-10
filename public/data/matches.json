@@ -926,10 +926,10 @@
     "stage": "quarters",
     "group": null,
     "kickoffTime": "2026-07-03T21:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 2,
+    "awayScore": 1,
     "description": "Cuartos de Final 2",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "ESP"
   },
   {
     "id": "M_QF3",
@@ -962,7 +962,7 @@
   {
     "id": "M_SF1",
     "homeTeamId": "FRA",
-    "awayTeamId": null,
+    "awayTeamId": "ESP",
     "placeholderHome": "Ganador Cuartos 1",
     "placeholderAway": "Ganador Cuartos 2",
     "stage": "semis",
