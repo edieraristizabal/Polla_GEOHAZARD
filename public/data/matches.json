@@ -961,7 +961,7 @@
   },
   {
     "id": "M_SF1",
-    "homeTeamId": null,
+    "homeTeamId": "FRA",
     "awayTeamId": null,
     "placeholderHome": "Ganador Cuartos 1",
     "placeholderAway": "Ganador Cuartos 2",
