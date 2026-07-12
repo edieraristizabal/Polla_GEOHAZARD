@@ -954,10 +954,10 @@
     "stage": "quarters",
     "group": null,
     "kickoffTime": "2026-07-04T21:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 3,
+    "awayScore": 1,
     "description": "Cuartos de Final 4",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "ARG"
   },
   {
     "id": "M_SF1",
@@ -976,7 +976,7 @@
   {
     "id": "M_SF2",
     "homeTeamId": "ENG",
-    "awayTeamId": null,
+    "awayTeamId": "ARG",
     "placeholderHome": "Ganador Cuartos 3",
     "placeholderAway": "Ganador Cuartos 4",
     "stage": "semis",
