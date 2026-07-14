@@ -968,10 +968,10 @@
     "stage": "semis",
     "group": null,
     "kickoffTime": "2026-07-08T19:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 0,
+    "awayScore": 2,
     "description": "Semifinal 1",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "ESP"
   },
   {
     "id": "M_SF2",
