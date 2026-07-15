@@ -982,10 +982,10 @@
     "stage": "semis",
     "group": null,
     "kickoffTime": "2026-07-09T19:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 2,
     "description": "Semifinal 2",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "ARG"
   },
   {
     "id": "M_F",
