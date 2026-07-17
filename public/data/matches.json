@@ -989,8 +989,8 @@
   },
   {
     "id": "M_F",
-    "homeTeamId": null,
-    "awayTeamId": null,
+    "homeTeamId": "ESP",
+    "awayTeamId": "ARG",
     "placeholderHome": "Ganador Semifinal 1",
     "placeholderAway": "Ganador Semifinal 2",
     "stage": "final",
