@@ -996,9 +996,9 @@
     "stage": "final",
     "group": null,
     "kickoffTime": "2026-07-19T19:00:00Z",
-    "homeScore": null,
-    "awayScore": null,
+    "homeScore": 1,
+    "awayScore": 0,
     "description": "Gran Final del Mundial",
-    "winnerIdToAdvance": null
+    "winnerIdToAdvance": "ESP"
   }
 ]
